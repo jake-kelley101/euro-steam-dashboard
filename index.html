@@ -1468,28 +1468,32 @@ var KEYS = { scope: 'es_scope', updates: 'es_updates', process: 'es_process' };
 var NOTES_STORAGE = 'es_action_notes'; // localStorage key for notes (also synced to Supabase)
 
 // ── CONFIG ──
-var SB_URL_KEY  = 'sb_project_url';
-var SB_KEY_KEY  = 'sb_anon_key';
-var _sb         = null;  // Supabase client instance
-var _isEditor   = false; // Set to true after successful login
+// ── SUPABASE CREDENTIALS (embedded for shared access) ──
+// Replace the two values below with your Supabase Project URL and anon key.
+// These are safe to embed — the anon key is public-facing and
+// write access is enforced by Row Level Security policies in Supabase.
+var SUPABASE_URL = 'https://abjfplcafyuzhsgbdxzf.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiamZwbGNhZnl1emhzZ2JkeHpmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MzcxNTAsImV4cCI6MjA5MzAxMzE1MH0._6gnVluYFIbFBeq1wdTylXi6AgG4VKILcz6csbrxGc0';
 
-function getConfig() {
-  return {
-    url: localStorage.getItem(SB_URL_KEY) || '',
-    key: localStorage.getItem(SB_KEY_KEY) || ''
-  };
-}
+var _sb       = null;
+var _isEditor = false;
 
 function initSupabase() {
-  var cfg = getConfig();
-  if (!cfg.url || !cfg.key) return false;
+  if (!SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_PROJECT_URL') return false;
   try {
-    _sb = supabase.createClient(cfg.url, cfg.key);
+    _sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     return true;
   } catch(e) { console.warn('Supabase init failed:', e); return false; }
 }
 
 function isConfigured() { return !!(_sb); }
+
+// Legacy config functions (kept for saveConfig modal compatibility)
+var SB_URL_KEY = 'sb_project_url';
+var SB_KEY_KEY = 'sb_anon_key';
+function getConfig() {
+  return { url: SUPABASE_URL, key: SUPABASE_ANON_KEY };
+}
 
 // ── AUTH ──
 function handleLockClick() {
@@ -1569,8 +1573,9 @@ async function saveConfig() {
   var errEl = document.getElementById('cfgError');
   errEl.style.display = 'none';
   if (!url || !key) { errEl.textContent = 'Both fields are required.'; errEl.style.display='block'; return; }
-  localStorage.setItem(SB_URL_KEY, url);
-  localStorage.setItem(SB_KEY_KEY, key);
+  // Update runtime vars
+  SUPABASE_URL = url;
+  SUPABASE_ANON_KEY = key;
   if (initSupabase()) {
     closeConfigModal();
     showToast('✓ Connected to Supabase');
@@ -3406,12 +3411,12 @@ window.addEventListener('load', function() {
   // Init Supabase if configured
   var sbReady = initSupabase();
 
-  // If NOT configured (local/preview), show editor controls immediately
+  // Controls are hidden by default for all users.
+  // They become visible only after a successful editor login.
+  // If Supabase is not configured (credentials not set), show a subtle indicator.
   if (!sbReady) {
-    _isEditor = true;
-    document.querySelectorAll('.editor-only').forEach(function(el){ el.style.display = ''; });
     var lockBtn = document.getElementById('lockBtn');
-    if (lockBtn) { lockBtn.textContent = '\u2699 Local Mode'; lockBtn.style.background = 'rgba(150,150,150,0.25)'; }
+    if (lockBtn) { lockBtn.textContent = '\u2699 Not connected'; lockBtn.title = 'Supabase not configured — paste credentials to connect'; }
   }
 
   // Render from localStorage immediately
