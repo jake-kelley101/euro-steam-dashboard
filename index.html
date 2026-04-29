@@ -861,10 +861,10 @@ tr.dragging { opacity: 0.45; }
   </div>
 
   <!-- Main layout: left column (commodity) | right column (bulletin) -->
-  <div style="display:grid;grid-template-columns:1fr 320px;gap:14px;margin-bottom:14px;align-items:stretch;">
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:14px;margin-bottom:14px;align-items:start;">
 
     <!-- Left column -->
-    <div style="display:flex;flex-direction:column;gap:14px;">
+    <div style="display:flex;flex-direction:column;gap:14px;" id="scopeColumn">
 
       <!-- Commodity Scope -->
       <div class="card">
@@ -886,13 +886,13 @@ tr.dragging { opacity: 0.45; }
 
     </div><!-- /left column -->
 
-    <!-- Right column: Bulletin Board matches scope card height -->
-    <div class="card" style="display:flex;flex-direction:column;min-height:0;">
+    <!-- Right column: Bulletin Board matches scope column height -->
+    <div class="card" id="bulletinCard" style="display:flex;flex-direction:column;box-sizing:border-box;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0;">
         <div class="card-title" style="margin-bottom:0;"><div class="card-dot" style="background:var(--indigo);"></div>Recent Updates</div>
         <button class="btn btn-primary btn-sm editor-only" style="display:none;" onclick="openUpdateModal()">+ Add</button>
       </div>
-      <div id="bulletinList" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;min-height:0;"></div>
+      <div id="bulletinList" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;"></div>
     </div>
 
   </div><!-- /outer 2-col grid -->
@@ -2044,6 +2044,7 @@ function saveScopeItem() {
   saveData(KEYS.scope, data);
   closeModal();
   renderScope();
+  setTimeout(syncBulletinHeight, 50);
   flashSaved();
 }
 function deleteScopeItem(id) {
@@ -2051,6 +2052,7 @@ function deleteScopeItem(id) {
   var data = loadData(KEYS.scope, DEFAULT_SCOPE).filter(function(r){return r.id!==id;});
   saveData(KEYS.scope, data);
   renderScope();
+  setTimeout(syncBulletinHeight, 50);
   flashSaved();
 }
 
@@ -2092,6 +2094,7 @@ function saveUpdateItem() {
   saveData(KEYS.updates, data);
   closeModal();
   renderBulletin();
+  setTimeout(syncBulletinHeight, 50);
   flashSaved();
 }
 function deleteUpdateItem(id) {
@@ -2099,6 +2102,7 @@ function deleteUpdateItem(id) {
   var data = loadData(KEYS.updates, DEFAULT_UPDATES).filter(function(r){return r.id!==id;});
   saveData(KEYS.updates, data);
   renderBulletin();
+  setTimeout(syncBulletinHeight, 50);
   flashSaved();
 }
 
@@ -2755,11 +2759,20 @@ function commitInlineEdits(row) {
   if (actCell) actCell.innerHTML = '';
   // Auto-move to completed if Done
   if (statVal === 'Done') moveRowToCompleted(row);
+  // Persist to Supabase + localStorage
+  var updatedItem = readRowToItem(row);
+  if (updatedItem.id) persistAction(updatedItem);
   updateActionCallout();
 }
 
 function handleStatusChange(sel, row) {
   row.setAttribute('data-status', sel.value);
+  // Persist status change immediately so Done rows save before commitInlineEdits
+  if (sel.value === 'Done') {
+    var item = readRowToItem(row);
+    item.status = 'Done';
+    if (item.id) persistAction(item);
+  }
 }
 
 function moveRowToCompleted(row) {
@@ -3495,6 +3508,7 @@ window.addEventListener('load', function() {
   initActionsDrag();
   setTimeout(updateActionCallout, 50);
   initNotesIndicators();
+  setTimeout(initBulletinSync, 100);
 
   // Fetch fresh from Supabase in background
   if (sbReady) {
@@ -3513,6 +3527,29 @@ window.addEventListener('load', function() {
   if (pwInput) pwInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') submitLogin(); });
   if (emInput) emInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') { var pw = document.getElementById('loginPassword'); if (pw) pw.focus(); } });
 });
+
+function syncBulletinHeight() {
+  var scopeCol    = document.getElementById('scopeColumn');
+  var bulletinCard = document.getElementById('bulletinCard');
+  if (!scopeCol || !bulletinCard) return;
+  var h = scopeCol.offsetHeight;
+  bulletinCard.style.height = h + 'px';
+  bulletinCard.style.maxHeight = h + 'px';
+}
+
+function initBulletinSync() {
+  var scopeCol = document.getElementById('scopeColumn');
+  if (!scopeCol) return;
+  syncBulletinHeight();
+  // Re-sync whenever the scope column changes size
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(syncBulletinHeight);
+    ro.observe(scopeCol);
+  } else {
+    // Fallback for older browsers
+    window.addEventListener('resize', syncBulletinHeight);
+  }
+}
 
 function promptAddResource(category) {
   alert('In the live version, this will open a form to add a document link. Category: ' + category);
