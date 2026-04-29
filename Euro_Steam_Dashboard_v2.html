@@ -1,0 +1,3545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Euro Steam Localization — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal: #007a7a;
+  --teal-light: #009999;
+  --teal-pale: #e6f4f4;
+  --teal-mid: #c0e4e4;
+  --red: #c0392b;
+  --red-pale: #fdecea;
+  --amber: #b45309;
+  --amber-pale: #fef3c7;
+  --green: #166534;
+  --green-pale: #dcfce7;
+  --gray-50: #f8f9fa;
+  --gray-100: #f0f2f4;
+  --gray-200: #e2e6ea;
+  --gray-300: #ced4da;
+  --gray-400: #8b95a1;
+  --gray-500: #6c757d;
+  --gray-600: #495057;
+  --gray-700: #343a40;
+  --gray-900: #1a1d23;
+  --indigo: #3730a3;
+  --indigo-pale: #eef2ff;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--gray-100);
+  color: var(--gray-900);
+  font-size: 16px;
+  min-height: 100vh;
+}
+
+/* ── SHELL ── */
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  background: var(--gray-900);
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.topbar-logo {
+  width: 28px; height: 28px;
+  background: var(--teal-light);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: white;
+  letter-spacing: -0.5px;
+}
+.topbar-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  letter-spacing: -0.2px;
+}
+.topbar-sub {
+  font-size: 11px;
+  color: var(--gray-400);
+  margin-top: 1px;
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.scope-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sbadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.sbadge-green { background: rgba(22,101,52,0.35); color: #6ee7b7; }
+.sbadge-red { background: rgba(192,57,43,0.3); color: #fca5a5; }
+.date-pill {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gray-400);
+  font-family: var(--mono);
+}
+
+/* ── NAV TABS ── */
+.nav {
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0 28px;
+  display: flex;
+  gap: 2px;
+  position: sticky;
+  top: 56px;
+  z-index: 99;
+  box-shadow: var(--shadow-sm);
+}
+.nav-tab {
+  padding: 14px 18px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--gray-500);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  user-select: none;
+}
+.nav-tab:hover { color: var(--gray-700); }
+.nav-tab.active {
+  color: var(--teal);
+  border-bottom-color: var(--teal-light);
+  font-weight: 600;
+}
+.nav-tab .tab-icon { font-size: 14px; }
+.nav-badge {
+  background: var(--red-pale);
+  color: var(--red);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-family: var(--mono);
+}
+
+/* ── CONTENT ── */
+.content {
+  flex: 1;
+  padding: 24px 40px 40px;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── SECTION HEADERS ── */
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--gray-400);
+  margin-bottom: 12px;
+}
+
+/* ── CARDS ── */
+.card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+}
+.card-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: var(--gray-500);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* ── GRID LAYOUTS ── */
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.span2 { grid-column: span 2; }
+.mb-14 { margin-bottom: 14px; }
+.mb-20 { margin-bottom: 20px; }
+
+/* ── DMAIC TIMELINE ── */
+.dmaic-wrap {
+  background: white;
+  border-radius: var(--radius);
+  padding: 20px 28px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  margin-bottom: 14px;
+}
+.dmaic-grid {
+  display: grid;
+  grid-template-columns: repeat(5,1fr);
+  gap: 0;
+  position: relative;
+}
+.dmaic-grid::before {
+  content: '';
+  position: absolute;
+  top: 17px; left: 10%; right: 10%;
+  height: 2px;
+  background: linear-gradient(to right,
+    #166534 0%, #166534 38%,
+    var(--teal) 38%, var(--teal) 62%,
+    var(--amber) 62%, var(--amber) 78%,
+    var(--gray-200) 78%);
+  z-index: 0;
+}
+.dmaic-phase { text-align: center; position: relative; z-index: 1; }
+.dmaic-circle {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800;
+  margin: 0 auto 10px;
+  border: 3px solid white;
+}
+.dmaic-phase-label { font-size: 11px; font-weight: 700; margin-bottom: 3px; }
+.dmaic-date { font-size: 11px; font-weight: 600; color: var(--gray-600); margin-bottom: 4px; font-family: var(--mono); }
+.dmaic-desc { font-size: 12px; color: var(--gray-500); line-height: 1.45; }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  gap: 4px;
+}
+.badge-green { background: var(--green-pale); color: var(--green); }
+.badge-yellow { background: var(--amber-pale); color: var(--amber); }
+.badge-red { background: var(--red-pale); color: var(--red); }
+.badge-gray { background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200); }
+.badge-teal { background: var(--teal-pale); color: var(--teal); }
+.badge-indigo { background: var(--indigo-pale); color: var(--indigo); }
+
+/* ── TABLE ── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--gray-500);
+  border-bottom: 2px solid var(--gray-200);
+  padding: 8px 10px; text-align: left;
+  background: var(--gray-50);
+}
+.data-table td {
+  padding: 10px 10px; font-size: 15px;
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: middle; line-height: 1.4;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--gray-50); }
+.comm-name { font-weight: 600; }
+.comm-link { color: var(--teal); cursor: pointer; font-weight: 600; }
+.comm-link:hover { text-decoration: underline; }
+
+/* ── PROCESS STEPS ── */
+.proc-step {
+  display: flex; align-items: flex-start; gap: 11px;
+  padding: 9px 0; border-bottom: 1px solid var(--gray-100);
+}
+.proc-step:last-child { border-bottom: none; }
+.proc-icon {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+}
+.p-done { background: var(--green-pale); color: var(--green); }
+.p-wip { background: var(--amber-pale); color: var(--amber); }
+.p-open { background: var(--red-pale); color: var(--red); }
+.proc-body { font-size: 15px; line-height: 1.4; }
+.proc-body strong { display: block; margin-bottom: 2px; }
+.proc-body small { display: block; color: var(--gray-500); font-size: 13px; margin-top: 2px; line-height: 1.4; }
+
+/* ── RISK ITEMS ── */
+.risk-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--gray-100);
+}
+.risk-row:last-child { border-bottom: none; }
+.risk-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.risk-high { background: var(--red); }
+.risk-med { background: #f59e0b; }
+.risk-body { font-size: 15px; line-height: 1.4; }
+
+/* ── TARIFF ── */
+.tariff-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--gray-100); font-size: 13px;
+}
+.tariff-row:last-child { border-bottom: none; }
+.t-rate { font-weight: 800; font-size: 17px; font-family: var(--mono); }
+.t-50 { color: var(--red); }
+.t-25 { color: #d97706; }
+.t-10 { color: var(--amber); }
+.t-0 { color: var(--green); }
+
+.alert-strip {
+  margin-top: 10px; padding: 9px 12px;
+  background: var(--amber-pale); border-left: 3px solid #f59e0b;
+  border-radius: var(--radius-sm); font-size: 12px; color: var(--amber); line-height: 1.5;
+}
+.note-strip {
+  margin-top: 10px; padding: 9px 12px;
+  background: var(--teal-pale); border-left: 3px solid var(--teal-light);
+  border-radius: var(--radius-sm); font-size: 12px; color: #005a5a; line-height: 1.5;
+}
+
+/* ── CONTACT GROUPS ── */
+.contact-group-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.7px; color: var(--teal); margin: 10px 0 6px;
+}
+.contact-group-label:first-child { margin-top: 0; }
+.contact-row {
+  padding: 6px 0; border-bottom: 1px solid var(--gray-100);
+}
+.contact-row:last-child { border-bottom: none; }
+.contact-name { font-weight: 600; font-size: 15px; }
+.contact-role { font-size: 11px; color: var(--gray-500); margin-left: 6px; }
+.contact-desc { font-size: 14px; color: var(--gray-500); margin-top: 2px; line-height: 1.4; }
+
+/* ── PIPELINE ── */
+.pipeline-tier { margin-bottom: 14px; }
+.pipeline-tier:last-child { margin-bottom: 0; }
+.pipeline-tier-label {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.7px; margin-bottom: 6px;
+}
+.pipeline-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.pipeline-note { font-size: 12px; color: var(--gray-500); line-height: 1.4; }
+
+/* ════════════════════════════════
+   TAB 2 — ACTION ITEMS
+════════════════════════════════ */
+.actions-toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.actions-toolbar-left { display: flex; gap: 8px; align-items: center; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  border: none; font-family: var(--font); transition: all 0.15s;
+}
+.btn-primary { background: var(--teal); color: white; }
+.btn-primary:hover { background: var(--teal-light); }
+.btn-outline { background: white; color: var(--gray-700); border: 1px solid var(--gray-300); }
+.btn-outline:hover { background: var(--gray-50); }
+.btn-danger { background: var(--red-pale); color: var(--red); border: 1px solid #fca5a5; }
+.btn-sm { padding: 5px 11px; font-size: 12px; }
+.btn-edit-mode { background: var(--amber-pale); color: var(--amber); border: 1px solid #fcd34d; }
+.btn-edit-mode.active { background: var(--amber); color: white; }
+
+.filter-select {
+  padding: 7px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-sm);
+  font-size: 13px; font-family: var(--font); color: var(--gray-700);
+  background: white; cursor: pointer;
+}
+
+.action-table { width: 100%; border-collapse: collapse; }
+.action-table th {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--gray-500);
+  border-bottom: 2px solid var(--gray-200);
+  padding: 8px 12px; text-align: left; background: var(--gray-50);
+}
+.action-table td {
+  padding: 10px 12px; font-size: 13px;
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: middle;
+}
+.action-table tr.done td { opacity: 0.55; }
+.action-table tr:hover td { background: var(--gray-50); }
+.action-table tr.done td { text-decoration: none; }
+.action-text-cell { line-height: 1.4; max-width: 360px; }
+.hold-note { font-size: 11px; color: var(--gray-400); font-style: italic; margin-top: 3px; }
+
+.status-select {
+  padding: 4px 8px; border: 1px solid var(--gray-300); border-radius: 20px;
+  font-size: 11px; font-family: var(--font); font-weight: 600;
+  background: white; cursor: pointer; color: var(--gray-700);
+}
+
+.completed-section { margin-top: 24px; }
+.completed-toggle {
+  font-size: 12px; font-weight: 600; color: var(--gray-400);
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  margin-bottom: 10px; user-select: none;
+}
+.completed-toggle:hover { color: var(--gray-600); }
+
+/* ════════════════════════════════
+   TAB 3 — RESOURCES
+════════════════════════════════ */
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.resource-category { }
+.resource-cat-header {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--gray-500);
+  padding-bottom: 8px; border-bottom: 2px solid var(--gray-200);
+  margin-bottom: 10px; display: flex; align-items: center; gap: 7px;
+}
+.resource-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 0; border-bottom: 1px solid var(--gray-100); gap: 8px;
+}
+.resource-item:last-child { border-bottom: none; }
+.resource-info { flex: 1; }
+.resource-name { font-size: 13px; font-weight: 500; color: var(--gray-700); }
+.resource-meta { font-size: 11px; color: var(--gray-400); margin-top: 2px; font-family: var(--mono); }
+.resource-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600; color: var(--teal);
+  text-decoration: none; white-space: nowrap;
+  padding: 4px 10px; border-radius: 20px;
+  background: var(--teal-pale); transition: all 0.15s;
+}
+.resource-link:hover { background: var(--teal-mid); }
+.resource-add {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--gray-400); cursor: pointer;
+  padding: 8px 0; margin-top: 4px;
+  border: 1px dashed var(--gray-300); border-radius: var(--radius-sm);
+  justify-content: center; transition: all 0.15s;
+}
+.resource-add:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-pale); }
+
+/* ════════════════════════════════
+   TAB 4 — ANALYTICS
+════════════════════════════════ */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.chart-card {
+  background: white; border-radius: var(--radius);
+  padding: 20px; box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  display: flex; flex-direction: column;
+  min-height: 400px;
+  overflow: visible;
+}
+/* Fixed-height header zone in each chart card so plot areas align across the row */
+.chart-card-header {
+  min-height: 72px;
+  display: flex; flex-direction: column; justify-content: flex-start; flex-shrink: 0;
+}
+
+/* Commodity scope: use table layout for even column alignment */
+.scope-table {
+  width: 100%; border-collapse: collapse;
+}
+.scope-table td {
+  padding: 9px 8px; vertical-align: middle; font-size: 15px;
+  border-bottom: 1px solid var(--gray-100);
+}
+.scope-table tr:last-child td { border-bottom: none; }
+.scope-table td:first-child  { width: 22px; padding: 0 4px; text-align: center; }
+.scope-table td:nth-child(2) { width: 12px; padding-right: 0; }
+.scope-table td:nth-child(3) { width: 180px; font-weight: 600; }
+.scope-table td:nth-child(4) { width: 60px; }
+.scope-table td:nth-child(5) { width: 160px; }
+.scope-table td:last-child   { font-size: 13px; color: var(--gray-500); }
+.chart-title {
+  font-size: 15px; font-weight: 600; color: var(--gray-700); margin-bottom: 4px;
+}
+.chart-sub { font-size: 13px; color: var(--gray-400); margin-bottom: 16px; }
+.chart-grow { display: flex; align-items: flex-end; min-height: 140px; height: 160px; flex-shrink: 0; }
+.chart-placeholder {
+  height: 180px; background: var(--gray-50); border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  border: 1px dashed var(--gray-300); position: relative; overflow: hidden;
+}
+.chart-placeholder-label {
+  font-size: 12px; color: var(--gray-400); font-style: italic; z-index: 1;
+}
+
+/* Bar chart mockup */
+.mock-bars { display: flex; align-items: flex-end; gap: 10px; height: 140px; padding: 0 10px; width: 100%; }
+.mock-bar { flex: 1; border-radius: 4px 4px 0 0; transition: opacity 0.2s; }
+.mock-bar:hover { opacity: 0.8; }
+
+/* Waterfall mockup */
+.mock-waterfall { display: flex; align-items: flex-end; gap: 8px; height: 140px; width: 100%; padding: 0 8px; }
+.wf-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.wf-bar { width: 100%; border-radius: 3px 3px 0 0; }
+.wf-label { font-size: 9px; color: var(--gray-500); text-align: center; font-family: var(--mono); }
+
+/* Donut mockup */
+.mock-donut { position: relative; width: 120px; height: 120px; margin: 0 auto; }
+.mock-donut svg { transform: rotate(-90deg); }
+.donut-legend { display: flex; flex-direction: column; gap: 6px; margin-left: 16px; }
+.donut-leg-item { display: flex; align-items: center; gap: 7px; font-size: 12px; }
+.donut-leg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* Line chart mockup */
+.mock-line { width: 100%; height: 140px; }
+
+/* Stat cards row */
+.stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px; }
+.stat-card {
+  background: white; border-radius: var(--radius-sm); padding: 14px 16px;
+  box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200);
+  border-top: 3px solid var(--teal-light);
+}
+.stat-card.red-top { border-top-color: var(--red); }
+.stat-card.green-top { border-top-color: #22c55e; }
+.stat-val { font-size: 26px; font-weight: 800; color: var(--teal); line-height: 1; font-family: var(--mono); }
+.stat-card.red-top .stat-val { color: var(--red); }
+.stat-card.green-top .stat-val { color: var(--green); }
+.stat-label { font-size: 12px; color: var(--gray-500); margin-top: 5px; }
+.stat-sub { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+
+/* ════════════════════════════════
+   TAB 5 — COMMODITY DETAIL
+════════════════════════════════ */
+.commodity-selector {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px;
+}
+.comm-pill {
+  padding: 7px 16px; border-radius: 20px;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--gray-300); background: white;
+  color: var(--gray-600); transition: all 0.15s; font-family: var(--font);
+}
+.comm-pill:hover { border-color: var(--teal); color: var(--teal); }
+.comm-pill.active { background: var(--teal); color: white; border-color: var(--teal); font-weight: 600; }
+
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+.detail-stat {
+  background: var(--gray-50); border-radius: var(--radius-sm);
+  padding: 12px 14px; border: 1px solid var(--gray-200);
+}
+.detail-stat-val { font-size: 22px; font-weight: 800; color: var(--teal); font-family: var(--mono); }
+.detail-stat-val.green { color: var(--green); }
+.detail-stat-val.red { color: var(--red); }
+.detail-stat-label { font-size: 12px; color: var(--gray-500); margin-top: 4px; }
+
+.supplier-table { width: 100%; border-collapse: collapse; }
+.supplier-table th {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--gray-500);
+  border-bottom: 2px solid var(--gray-200);
+  padding: 7px 10px; text-align: left;
+}
+.supplier-table td {
+  padding: 9px 10px; font-size: 13px;
+  border-bottom: 1px solid var(--gray-100); vertical-align: middle;
+}
+.supplier-table tr:last-child td { border-bottom: none; }
+
+.spec-row {
+  display: flex; gap: 6px; align-items: flex-start;
+  padding: 7px 0; border-bottom: 1px solid var(--gray-100); font-size: 15px;
+}
+.spec-row:last-child { border-bottom: none; }
+.spec-label { font-weight: 600; width: 120px; flex-shrink: 0; color: var(--gray-600); font-size: 12px; }
+.spec-val { color: var(--gray-700); line-height: 1.4; }
+
+/* ── PLACEHOLDER DATA TAG ── */
+.placeholder-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 600; color: #6366f1;
+  background: var(--indigo-pale); padding: 2px 8px; border-radius: 10px;
+  margin-left: 8px; vertical-align: middle;
+}
+
+/* ── EDIT FORM ── */
+.add-row-form {
+  display: none;
+  background: var(--amber-pale);
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-top: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.add-row-form.visible { display: flex; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group label { font-size: 11px; font-weight: 600; color: var(--amber); }
+.form-input {
+  padding: 7px 10px; border: 1px solid #fcd34d; border-radius: var(--radius-sm);
+  font-size: 13px; font-family: var(--font); background: white;
+  color: var(--gray-700); min-width: 200px;
+}
+.form-input-sm { min-width: 130px; }
+
+/* ── SCOPE LIST ROWS ── */
+.scope-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 9px 10px; border-bottom: 1px solid var(--gray-100);
+  transition: background 0.1s;
+}
+.scope-row:hover { background: var(--gray-50) !important; }
+
+/* ── BULLETIN CARDS ── */
+.bulletin-card {
+  background: var(--gray-50); border-radius: var(--radius-sm);
+  padding: 11px 13px; border-left: 3px solid var(--teal);
+  border: 1px solid var(--gray-200); border-left-width: 3px;
+}
+.bulletin-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.bulletin-tag {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.6px; padding: 2px 7px; border-radius: 10px;
+}
+.bulletin-date { font-size: 11px; color: var(--gray-400); font-family: var(--mono); margin-left: auto; }
+.bulletin-body { font-size: 14px; color: var(--gray-600); line-height: 1.5; }
+
+/* ── DMAIC TOOLTIP INDICATOR ── */
+.dmaic-tip-indicator { font-size: 8px; color: var(--gray-300); letter-spacing: 2px; margin-top: 4px; cursor: pointer; }
+.dmaic-phase { cursor: pointer; }
+.dmaic-phase:hover .dmaic-tip-indicator { color: var(--teal-light); }
+
+/* ── ICON BUTTONS (edit/delete on rows) ── */
+.icon-btn {
+  width: 24px; height: 24px; border-radius: 5px;
+  border: 1px solid var(--gray-200); background: white;
+  color: var(--gray-500); font-size: 12px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all 0.12s; font-family: var(--font); flex-shrink: 0;
+}
+.icon-btn:hover { background: var(--teal-pale); color: var(--teal); border-color: var(--teal-mid); }
+.icon-btn-del:hover { background: var(--red-pale); color: var(--red); border-color: #fca5a5; }
+
+/* ── SAVED FLASH ── */
+#savedFlash {
+  position: fixed; bottom: 24px; right: 28px; z-index: 300;
+  background: var(--gray-900); color: white; font-size: 12px; font-weight: 600;
+  padding: 8px 16px; border-radius: 20px; opacity: 0;
+  transition: opacity 0.3s; pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* ── MODAL INPUTS ── */
+.modal-input {
+  width: 100%; padding: 8px 10px;
+  border: 1px solid var(--gray-300); border-radius: var(--radius-sm);
+  font-size: 15px; font-family: var(--font); color: var(--gray-700);
+  background: white; box-sizing: border-box;
+}
+.modal-input:focus { outline: none; border-color: var(--teal-light); box-shadow: 0 0 0 2px var(--teal-pale); }
+textarea.modal-input { resize: vertical; }
+
+
+/* ── ACTION NOTES PANEL ── */
+.action-notes-row td { padding: 0 !important; border-bottom: 2px solid var(--teal-mid) !important; background: #f8fffe !important; }
+.action-notes-panel { padding: 12px 16px 14px 48px; }
+.action-notes-panel textarea {
+  width: 100%; min-height: 90px; max-height: 280px;
+  border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+  padding: 9px 11px; font-size: 14px; font-family: var(--font);
+  color: var(--gray-700); background: white; resize: vertical;
+  line-height: 1.5; outline: none;
+}
+.action-notes-panel textarea:focus { border-color: var(--teal-light); box-shadow: 0 0 0 2px var(--teal-pale); }
+.notes-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.notes-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.7px; color: var(--teal); }
+.notes-count { font-size: 11px; color: var(--gray-400); }
+.expand-btn {
+  background: none; border: none; cursor: pointer; padding: 0;
+  color: var(--gray-400); font-size: 13px; transition: transform 0.15s, color 0.15s;
+  line-height: 1; width: 100%; text-align: center;
+}
+.expand-btn:hover { color: var(--teal); }
+.expand-btn.open { transform: rotate(90deg); color: var(--teal); }
+.notes-icon { font-size: 11px; color: var(--teal-light); margin-left: 4px; display: none; }
+tr.has-notes .notes-icon { display: inline; }
+
+
+/* ── INLINE EDITING ── */
+.inline-edit-input {
+  font-size: 13px; font-family: var(--font); color: var(--gray-700);
+  border: 1px solid var(--teal-mid); border-radius: 4px;
+  padding: 3px 6px; width: 90%; background: white;
+}
+.inline-edit-select {
+  font-size: 12px; font-family: var(--font); color: var(--gray-700);
+  border: 1px solid var(--teal-mid); border-radius: 4px;
+  padding: 3px 4px; background: white; width: 100%;
+}
+.action-status-label[contenteditable="true"] { cursor: text; }
+.add-label-btn {
+  font-size: 11px; padding: 2px 8px; border-radius: 10px;
+  border: 1px dashed var(--gray-300); background: white;
+  color: var(--gray-400); cursor: pointer; font-family: var(--font);
+  margin-top: 4px; display: none;
+}
+.edit-mode-active .add-label-btn { display: inline-flex; align-items: center; gap: 4px; }
+/* ── SAVINGS INFO BUTTON ── */
+.savings-info-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--gray-200); color: var(--gray-600);
+  font-size: 11px; font-weight: 700; cursor: pointer;
+  flex-shrink: 0; border: none; font-family: var(--font);
+  transition: background 0.15s;
+}
+.savings-info-btn:hover { background: var(--teal-pale); color: var(--teal); }
+
+/* ── INLINE EDIT INPUTS ── */
+.inline-edit-input {
+  border: 1px solid var(--teal-light); border-radius: 4px;
+  padding: 3px 6px; font-size: 13px; font-family: var(--font);
+  color: var(--gray-700); background: white; outline: none;
+}
+.inline-edit-input:focus { box-shadow: 0 0 0 2px var(--teal-pale); }
+
+/* ── ACTION FLAGS ── */
+.action-flag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600; margin-top: 4px;
+  padding: 2px 8px; border-radius: 10px; width: fit-content;
+}
+.action-flag.warning { color: var(--red);   background: var(--red-pale);   border: 1px solid #fca5a5; }
+.action-flag.hold    { color: var(--gray-500); background: var(--gray-100); border: 1px solid var(--gray-300); }
+.action-flag.info    { color: #2563eb;      background: #eff6ff;           border: 1px solid #93c5fd; }
+.action-flag.urgent  { color: #b91c1c;      background: #fef2f2;           border: 1px solid #fca5a5; font-weight: 800; }
+
+
+/* ── DRAG & DROP ── */
+.drag-handle {
+  cursor: grab; color: var(--gray-300); font-size: 14px;
+  padding: 0 6px; user-select: none; line-height: 1;
+  transition: color 0.12s;
+}
+.drag-handle:hover { color: var(--teal); }
+.drag-handle:active { cursor: grabbing; }
+tr.drag-over td { border-top: 2px solid var(--teal) !important; }
+tr.dragging { opacity: 0.45; }
+.scope-table td:first-child { width: 22px; padding: 0 4px; text-align: center; }
+/* ── ACTION EDIT MODAL ── */
+#actionEditModal label { font-size:12px; font-weight:700; color:var(--gray-500); display:block; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.5px; }
+#actionEditModal .modal-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+
+.toggle-btn {
+  padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 600;
+  border: 1px solid var(--gray-300); background: white; color: var(--gray-500);
+  cursor: pointer; font-family: var(--font); transition: all 0.15s; white-space: nowrap;
+}
+.toggle-btn:hover { border-color: var(--teal); color: var(--teal); }
+.toggle-btn.active { background: var(--teal); color: white; border-color: var(--teal); }
+
+</style>
+</head>
+<body>
+<div class="shell">
+<div id="savedFlash">✓ Saved</div>
+<button id="lockBtn" onclick="handleLockClick()" style="position:fixed;top:12px;right:16px;z-index:100;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:white;font-size:13px;font-weight:600;padding:5px 12px;cursor:pointer;font-family:var(--font);transition:background 0.15s;" title="Editor login">🔒 Edit</button>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <img src="data:image/png;base64,/9j/4AAQSkZJRgABAgAAAQABAAD/wAARCABwAMQDACIAAREBAhEB/9sAQwAIBgYHBgUIBwcHCQkICgwUDQwLCwwZEhMPFB0aHx4dGhwcICQuJyAiLCMcHCg3KSwwMTQ0NB8nOT04MjwuMzQy/9sAQwEJCQkMCwwYDQ0YMiEcITIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIy/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMAAAERAhEAPwD3+iiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigBBRUcsyQRPLIQsaKWZj0AFeXX/xD1fUL822jW6qjEqnyFnbHf0H61cISnsc2IxVPDpOfU9U6Clry2TWvHunRmaazLpgnBiDfopzXbazql1Y+E5tRiCrcpAsmGHAY4zxTlTasRRxtOqnZNWV9Ubhorznwf4y1bW/EC2d4YDEY2Y7EwcjGO9aXjrxLqHh9rQWJhAlzu8xc9PxFDpSUuXqKGOozpOstkdoOnFFeRw+OfFlym+3tklTONyW5YZ+oNbPhzxL4n1DXbe1v7Mpavu3sbdl6AkcnjriqdCSMoZnRm0knr5HofWjGK878Z+MNV0PXBaWZh8rylf50ycnPfPtS+DvG99q+sGx1EwBXQmMqu35h26nPGfypeyly83Q0lmFGNb2L3PQ6Kgu7iOztJbiVgscalmJ7AV5JL8SdcM0jxfZ1jLEoDHkgZ4zz1xUwpynsaYnGUsNb2nU9iFFZHh7UJ9S8P215cbfNkTc20YGa82b4ieITcNFGLdm3lVUREknOMDnk01SlJ2RFXHUqUI1JbPY9go715P/AMJj4z/58D/4CPXbaRqeo3HhN7+9j8u7WN22lCuMZxweaJUpRV2FHH06suWKf3HRUZzXja/EnXxhj9lI648sj8OtepabqkeqaLHqEBGHjLY9GHUfgc0TpSjqx4fHUcQ3GG6NLpSVwHg3xbqmua1La3hhMSoWGxMc5+tS+MPHD6Nd/YNPRHuVAMjuMhc9PqaHTlfl6gsdRdN1W7JaHd0n0ryuHWPHs8Auo7d2iYZH7sDIPsTmux8Iatqeq6dNJqkHlTpIVx5ZTI+holSlFXFRx1OrPkSav5HS0UUVmdoUUUUAU9StWvdLurUHBmiaMH0yCM/rXhUMmo+GNZD7DDdQMQA68EYwfqCPSvfXkSKMyOwCqMknsKw7mTw54it9k0lpcpjIJYAj6HqK2pVOS91ozzcfhPb8rjK0lsYOifEmzumSDUovssh48wHKE+/pW34xdZfBmouhDIYcgg5zyK8u8XaVpuk6qIdNuRLGy7mXcG2H6iuutjOfhDP52f8AVHZn+7u4rSVOOk4nHQxdZueHratJ6o574cf8jdH/ANcX/pW38Vv9Zp3/AAKsT4cf8jdH/wBcX/pW38Vv9Zp3/Aq0n/GicuG/5F1T1/yM7wr43s/D+kfY5reWRy5bK4AGfrXbeHPGNr4kvJbe3t5I2iTeWYg8ZxXL+Cb/AMO22hlNTks1nMhwJVBbHbqK6/TtY8NG6WHT7mz8+X5QIgAW9uBWVZRu9Hc7cvdb2cLzXL26nAfERVk8ZRI2drRRg49CTWBcwXHhrxGF3HfbSK6sOMqcHj6g4roPiF/yOkP/AFzj/mavfEjSQILLVo15KiKQjv3X+tbU5JRjF9Tz8ZSc61Wcd4tM0fHfiKNvCtslsc/2gAcg5woAJB/P+ded6ppb6XFZeaT5lxB5zL6ZJA/QCreg2c/iDWtP0+WRmhiHT+6gJJA/E/rWz8TY1j120RQAotgAB7MaIL2b5UTiZyxdN13skkd94O/5E+y/65n+deNWdytlrkN24LLDciQgdSA2cD8q9l8Hf8ifY/8AXM/zrxzT2hj8RW73BUQLdAyFhkBQ3OfbFTS+OR0Y3/daFv62PQ/+FqaaBj7FP+Yrq7u6S98Mz3KAhZbZmAPYFTWT/a/gvH+u07/vgf4Vp3F3aX3hu7lsJY5IPIcKY+nCniueXL0TPVourZ+0knp0PFbDSpL7R7+7iyzWmxivqpzk/hiur+HWtmF7nSJW+SZGeHJ/iA5H5Y/KpfhbEkx1WKQZR0RWB7g5zXMa5p0/hrxFLFEWTy23wuO6npg+wOPwrrk1NumzwKUZUIwxUe7TNz4af8jNP/1yb+dVvH2k3Vn4hnvDG7W05DLIASAccgntirHwzy3iSY9zCT+tel3OqaSbl7C6ubfzRgNFIR35HWs5ycKie+h2YahHE4SUW7e9c870L4k3NoqQapD9oiGB5sfDj6jof0r0jStWsdYtBc2MyyRng44Kn0I7V55420Dw/aWT31lPHDdEgrDG4KyZPOBzjg59Kj+FrT/2xeKufIMILgdN2Rj8cZqZwjKLnHQ1w+Jr0K0cPWs77M9XooorlPeCiiigCC4hFxbyQscB1Kkj34rzyf4VKz5h1MqpOfniz/IivQry6jsrKe6mOI4UMjH0AGTXllhP4w8fSzXtlqQ0zTVcrDjPODg9OT+JreipauOi8zGrg6eJt7Tp5m1p/wAMLK3lSS9vHnVeSirtDH39q63U9Ji1HQ5tLRvJikj2AqPuj2FcGfh34sLEnxlPknPBk/8Aiqr6jofjrwzZtqVt4gN+sA3PEwJO0deGJz/OtJQ52vfQUcvoUk1Dd6f0zp/D3gSLQNWW+W8eUhGXaVAHOP8ACrnijwpH4l+zl7loTDnGADnNLoHiqDV/CK63KFi2RsZ0zkKy9R/I/jXDadN4y8fSTX1rqI0vTlcrEF6n8sE/XOM5qVGpKbbdrdyYZfSjTlSSsuprf8Krg/6CUn/fAq9pHw7g0rVbe+F88hhbcFKgZNY4+HnixWDDxnPnOerkf+hUljrPiLwd4ktNL8Q3IvbC8ISKcdVOcZz16kde1aPma92SZlDKMMmnHdeZ0uv+Cotd1hNQa7eJlVV2BQRwc1tappMWq6PLp0pwjpt3dSD2Nc/488VXWgW1raaaivqN6+yHcM7egzjvyQKwl8E+Nr6ES3Xit4JZPmaNN3yn04IH5VlCMpRTbSXmdMcHTvKb05tzp/DHg638OXE04nM8sihQzKBtHfH14/Ko/E3gqLxHfx3TXbQlI/L2hc55Jz+tc6nw+8WxncPGU5PuXP8ANqZpmueIvCXia10XxDOLyzvDthuepBJx9frn2xVuEm+aMk2R/Z1D2Psl8O56Bo+mDSdJgsRIZBEu0MeK42T4WwPI7f2jINzE/cHrmtTx54pn8OafBFYxCW/u38uEHnHqcd/auei8I+O7yNbi48TeRLIMtGCSFPpwQPyqacZ/HdL1FPL6VWnGE1ottS1/wquD/oJSf98Cuo0fw3HpHh+XSlnaRZN/zkYI3D0rn9d1vUfBfhG1t5Zxf6vKfKjkIJyfUjrWZD4P8calALi88TvayS/MYk3HbntkEAfhVWnON3JJCo5ZQpS54+m51fhXwlH4Za5ZLlp/OCjlcYxn/Gn+J/Cdt4lELSStDNFkB1Gcg9jXJp8PfFqMGHjKfj18wj8t1QrrPiXwNrVnaa9erf6ZdvsWYjkHucnn8CaHCTlzRkmzRYCiqXsVqjp/DngqLw7qLXa3jy7k27SoFQ+IvAMWvanLfi9aKSRQNpUEDAxWL4hvNe8E+JYtV+03F7oM7YliclvKz1A9PUH8DXomn39tqdjFeWkgkhlUMrD0rObqK1S9zJ5dRjS9nb3b3OAg+FKiQGfUyydxHHg/mSa7bRtDsdCtPs9lFtB5ZjyWPqTWb4x8UQ+F9Ge44e6k+WCLuzH+gql4CstZGmtqWt3k8txd/OkMjHESnkcdjTbqThzSegUcvoUnzxWv3nZ0UUVznUFFFFAGR4o/5FXVv+vOX/0E1znwmAHgSDjH76T+ddTrttJeaBqFtCMyzW0iIPcqQK4D4ZeItM0/w62lX93Fa3VvM+5Zn2ggnjBNdEFejJLyNYfAzY17x5c6Nq8timg3d0sYB82Poc1j3fxLvbizmhXwxfKZEZQT0GRjNd7/AG9ox/5idn/3+X/GsnXvGmjaTpVxPHf20s6ofLjjcMxYjjge9KHJouS79SUvI5LwrbTWvwk1aOeJ4nHmHa6kHGB2NdD8LP8AkRLP/ef/ANCNU7K/1bVPhZfXurshnmgkZdqbPl6DIFXPhZ/yItp/vP8A+hGtZtuM2+6NJX5WdpXmXxV/4/8Aw/8A9fI/mK9NrzP4rf8AH/4f/wCvkfzFZYb+KjOn8SI/HX/I9+Ff94f+hCvQdXv20zSri9SBp2hTcI06t7CvPviSslhrPh3WmjZrW2fErAZC8gj8xn8q7a18VaFeRK8Wq2hDKG2mUA4PqM5FXV1pwdu/5lSV0vmch/wtK8/6Fe/rn9c1+98V63opGiXdqLa4BYuucgkenSvVW1/REXLapZAe8y/41x2seNri68W6Vo/hu4inV3/0mRUEi4zyM9sDkketVScea8Ya+okuqRF8Rv8AkavC/wD18D+delDtXmvxG/5Grwv/ANfA/nXpXpWNT+HD5/mS/hR5l8Uv+Qz4c/6+R/6EteiXU5tbCW4WNpDFGW2L1bAzgV5/8WYJYYtJ1VY2eK0uAZAo6DIIJ9uMfjXWWHi7Qr61ilj1S1Uuo+RpQrD6gnIq5q9GFl3KteK0OSHxRvCB/wAUvf8ATNUNT+IlnetbR6v4UmZfNHleeQAGJAyM9xxXoza9oqqWbU7IAdT5y/415x8QtXs/Eep6Po+kSpdTC4Du0XzKB7EcHoaql7OUkuVr5jiru1j0+8s7fVNPktbqISQTJhlPoa4DQLHU/AWq6nHdyhvDaRmeOVzyD2VR/e7Ed+tekIoRFX0GK84+L0kj6fpVoHZY57rD4PXA6Y79aii25ezWzFF68vQoeGtOufH3id/E2pow023YpawN0bB4/AHk+pr1cAAY7VW06zgsNOgtraNY4Y0AVQMACrVTWqcz5Y7LYmTu7C0UUViSFFFFACVy+teAPD2u3RubuzxMTlniYoWPqcda6iiqjOUXeI02tjhD8JfDJORHdAen2g1YtPhf4XtLpLhbSSRlOQsspZT9Qa7OlrT6xV7le0l3Kd5p9ve6fLYyoRbyoY2VePl6YFQ6LotnoGmR2FirrBGSVDsWPJyeTWjRWfM7WJ5nsFY2t+GdN8QSWsl8kjNbPvj2OVwfwrapKUZOLutxJtO5Xu7C2v7R7S6hWWB12sjDIIrj3+E/hZ3Zxb3C5OcLOwAruKXFVCrOPwspSa2ODHwl8MAfMl031nNb+g+E9G8Now060CO33pW+ZyPTJ5xW5RVSr1JKzYOcnpcx9W8NadrV7ZXd4kjS2b74irlQD7461sUtFZttpIm5DcW8N3A8FxEskTgqyOMgj3FcdN8KvC0szyi2njLHO2OYgD2ArtqKqNScPhY1JrY4RfhL4ZGdyXTfWc8VuaF4N0Tw4xfT7QLKcjzXJZsegJ7Vv0tVKvUkrNlOcn1ErG13wzp3iL7N9vSRvs8nmR7HK4PvitqkrOMnF3W5CdmCqFUAdAKWiikAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQB/9k=" alt="Siemens Energy" style="height:38px;width:auto;border-radius:4px;background:white;padding:3px 6px;">
+    <div>
+      <div class="topbar-title">Euro Steam Localization</div>
+      <div class="topbar-sub">STG North America · Strategic Sourcing</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="scope-badge">
+      <span class="sbadge sbadge-green">✓ NBG In Scope</span>
+      <span class="sbadge sbadge-red">✗ FSP Excluded</span>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray-500);margin-bottom:1px;">Last Updated</div>
+      <div class="date-pill" id="lastUpdatedDate">Apr 23, 2026</div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-tab active" onclick="switchTab('status', this)"><span class="tab-icon">⊞</span> Status</div>
+  <div class="nav-tab" onclick="switchTab('reference', this)"><span class="tab-icon">☰</span> Reference</div>
+  <div class="nav-tab" onclick="switchTab('actions', this)"><span class="tab-icon">✓</span> Action Items <span id="actionsNavBadge" class="nav-badge">9</span></div>
+  <div class="nav-tab" onclick="switchTab('analytics', this)"><span class="tab-icon">◈</span> Analytics</div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+<!-- ═══════════════════════════
+     TAB 1: OVERVIEW
+═══════════════════════════ -->
+<div id="tab-status" class="tab-panel active">
+
+  <!-- Project Summary — compact always-visible banner -->
+  <div class="mb-14" style="background:linear-gradient(135deg,var(--gray-900) 0%,#1e3a3a 100%);border-radius:var(--radius);padding:14px 20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <div style="font-size:15px;font-weight:700;color:white;">Euro Steam Localization</div>
+      <span style="font-size:12px;color:var(--teal-light);">NBG Scope · STG NA</span>
+    </div>
+    <div style="width:1px;height:32px;background:rgba(255,255,255,0.15);flex-shrink:0;"></div>
+    <div style="font-size:13px;color:#d1e8e8;flex:1;min-width:260px;"><strong style="color:white;">Why:</strong> §232 tariffs up to 50% apply to NBG intercompany purchases, significantly increasing landed cost.</div>
+    <div style="width:1px;height:32px;background:rgba(255,255,255,0.15);flex-shrink:0;"></div>
+    <div style="font-size:13px;color:#d1e8e8;flex:1;min-width:260px;"><strong style="color:white;">What:</strong> Qualify US-based suppliers for NBG-spec parts — starting with fasteners &amp; springs.</div>
+    <div style="width:1px;height:32px;background:rgba(255,255,255,0.15);flex-shrink:0;"></div>
+    <div style="display:flex;gap:14px;flex-shrink:0;flex-wrap:wrap;">
+      <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:var(--teal-light);">$1.23M</div><div style="font-size:11px;color:#8b95a1;">Est. Annual Saving</div></div>
+      <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:white;">2</div><div style="font-size:11px;color:#8b95a1;">In-Scope Commodities</div></div>
+      <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:var(--amber);">Improve</div><div style="font-size:11px;color:#8b95a1;">DMAIC Phase</div></div>
+    </div>
+  </div>
+
+    <!-- Action items callout -->
+  <div id="actionCallout" style="background:var(--indigo-pale);border:1px solid #c7d2fe;border-radius:var(--radius-sm);padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:18px;">✓</span>
+      <div>
+        <span id="actionCalloutText" style="font-size:14px;font-weight:600;color:var(--indigo);">9 open actions</span>
+        <span style="font-size:13px;color:#4338ca;"> · </span>
+        <span id="actionCalloutOverdue" style="font-size:13px;color:#c0392b;font-weight:600;"></span>
+      </div>
+    </div>
+    <button onclick="switchTabByName('actions')" style="font-size:13px;font-weight:600;color:var(--indigo);background:white;border:1px solid #c7d2fe;border-radius:20px;padding:4px 14px;cursor:pointer;">View all →</button>
+  </div>
+
+  <!-- Main layout: left column (commodity) | right column (bulletin) -->
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:14px;margin-bottom:14px;align-items:start;">
+
+    <!-- Left column -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Commodity Scope -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div class="card-title" style="margin-bottom:0;"><div class="card-dot" style="background:var(--teal-light);"></div>Commodity Scope</div>
+          <button class="btn btn-primary btn-sm editor-only" style="display:none;" onclick="openScopeModal()">+ Add Commodity</button>
+        </div>
+
+        <!-- Legend -->
+        <div style="display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--gray-500);"><span style="width:10px;height:10px;border-radius:50%;background:var(--green);display:inline-block;"></span> In Scope</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--gray-500);"><span style="width:10px;height:10px;border-radius:50%;background:var(--amber);display:inline-block;"></span> Pipeline - Next Up</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--gray-500);"><span style="width:10px;height:10px;border-radius:50%;background:var(--gray-400);display:inline-block;"></span> Under Review</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--gray-500);"><span style="width:10px;height:10px;border-radius:50%;background:var(--red);display:inline-block;"></span> Excluded</div>
+        </div>
+
+        <div id="scopeList" style="display:flex;flex-direction:column;gap:0;"></div>
+      </div>
+
+    </div><!-- /left column -->
+
+    <!-- Right column: Bulletin Board full height -->
+    <div class="card" style="display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="card-title" style="margin-bottom:0;"><div class="card-dot" style="background:var(--indigo);"></div>Recent Updates</div>
+        <button class="btn btn-primary btn-sm editor-only" style="display:none;" onclick="openUpdateModal()">+ Add</button>
+      </div>
+      <div id="bulletinList" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;"></div>
+    </div>
+
+  </div><!-- /outer 2-col grid -->
+
+</div><!-- /tab-status -->
+
+<!-- ═══════════════════════════
+     TAB 2: REFERENCE
+═══════════════════════════ -->
+<div id="tab-reference" class="tab-panel">
+
+<!-- Project Summary — compact always-visible banner -->
+  <div class="mb-14" style="background:linear-gradient(135deg,var(--gray-900) 0%,#1e3a3a 100%);border-radius:var(--radius);padding:14px 20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <div style="font-size:15px;font-weight:700;color:white;">Euro Steam Localization</div>
+      <span style="font-size:12px;color:var(--teal-light);">NBG Scope · STG NA</span>
+    </div>
+    <div style="width:1px;height:32px;background:rgba(255,255,255,0.15);flex-shrink:0;"></div>
+    <div style="font-size:13px;color:#d1e8e8;flex:1;min-width:260px;"><strong style="color:white;">Why:</strong> §232 tariffs up to 50% apply to NBG intercompany purchases, significantly increasing landed cost.</div>
+    <div style="width:1px;height:32px;background:rgba(255,255,255,0.15);flex-shrink:0;"></div>
+    <div style="font-size:13px;color:#d1e8e8;flex:1;min-width:260px;"><strong style="color:white;">What:</strong> Qualify US-based suppliers for NBG-spec parts — starting with fasteners &amp; springs.</div>
+    <div style="width:1px;height:32px;background:rgba(255,255,255,0.15);flex-shrink:0;"></div>
+    <div style="display:flex;gap:14px;flex-shrink:0;flex-wrap:wrap;">
+      <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:var(--teal-light);">$1.23M</div><div style="font-size:11px;color:#8b95a1;">Est. Annual Saving</div></div>
+      <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:white;">2</div><div style="font-size:11px;color:#8b95a1;">In-Scope Commodities</div></div>
+      <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:var(--amber);">Improve</div><div style="font-size:11px;color:#8b95a1;">DMAIC Phase</div></div>
+    </div>
+  </div>
+
+<!-- DMAIC -->
+  <div class="dmaic-wrap mb-14">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div class="section-label" style="margin-bottom:0;">Project Timeline</div>
+      <div style="font-size:11px;color:var(--gray-400);font-style:italic;">Hover over each phase for details</div>
+    </div>
+    <div class="dmaic-grid">
+      <div class="dmaic-phase" data-tip="Project launched in response to Section 232 tariff exposure on intercompany purchases of European steam turbine parts. Tariff impact assessed across commodity groups. Initial facility scope (NBG) and commodity scope (springs & fasteners) defined in alignment with NBG team.">
+        <div class="dmaic-circle" style="background:#166534;color:white;box-shadow:0 0 0 3px white, 0 0 0 5px #166534;">D</div>
+        <div class="dmaic-phase-label" style="color:#166534;">Define</div>
+        <div class="dmaic-date">Oct 2025</div>
+        <div class="dmaic-tip-indicator">●●●</div>
+      </div>
+      <div class="dmaic-phase" data-tip="RFQs issued to US suppliers across multiple commodity groups including fasteners, springs, rings, bearings, and valve stems & seats. Baseline intercompany costs established for comparison. Initial supplier landscape mapped.">
+        <div class="dmaic-circle" style="background:#166534;color:white;box-shadow:0 0 0 3px white, 0 0 0 5px #166534;">M</div>
+        <div class="dmaic-phase-label" style="color:#166534;">Measure</div>
+        <div class="dmaic-date">Nov 2025 – Jan 2026</div>
+        <div class="dmaic-tip-indicator">●●●</div>
+      </div>
+      <div class="dmaic-phase" data-tip="Quote results reviewed with NBG. Scope narrowed to Nuremberg only; Finspång excluded per leadership direction. Fasteners and springs approved for local sourcing. FSP-based valve evaluation set aside. Tariff prioritization framework established (50% §232 first).">
+        <div class="dmaic-circle" style="background:var(--teal);color:white;box-shadow:0 0 0 3px white, 0 0 0 5px var(--teal);">A</div>
+        <div class="dmaic-phase-label" style="color:var(--teal);">Analyze</div>
+        <div class="dmaic-date">Jan – Mar 2026</div>
+        <div class="dmaic-tip-indicator">●●●</div>
+      </div>
+      <div class="dmaic-phase" data-tip="Quinnesec C5757 identified as first pilot order. Tom Watts leading supplier quoting; Brenda Heck designated as buyer for local source orders. NBG engineering support PO issued. SAP demand routing nightly batch confirmed. Quality framework, Globus doc access, and ECR process identified as open workstreams.">
+        <div class="dmaic-circle" style="background:var(--amber);color:white;box-shadow:0 0 0 3px white, 0 0 0 5px var(--amber);">I</div>
+        <div class="dmaic-phase-label" style="color:var(--amber);">Improve</div>
+        <div class="dmaic-date">Mar 2026 – Present</div>
+        <div class="dmaic-tip-indicator">●●●</div>
+      </div>
+      <div class="dmaic-phase" data-tip="Planned: Formalize DLPs and SOPs for local sourcing workflow. Build standardized DIN → ASTM substitution matrix. Establish standing NBG engineering support arrangement. Scale execution to additional commodities as scope expands.">
+        <div class="dmaic-circle" style="background:var(--gray-200);color:var(--gray-400);box-shadow:0 0 0 3px white, 0 0 0 5px var(--gray-300);">C</div>
+        <div class="dmaic-phase-label" style="color:var(--gray-400);">Control</div>
+        <div class="dmaic-date">Upcoming</div>
+        <div class="dmaic-tip-indicator" style="color:var(--gray-300);">●●●</div>
+      </div>
+    </div>
+    <!-- Tooltip -->
+    <div id="dmaic-tooltip" style="display:none;margin-top:14px;padding:11px 14px;background:var(--gray-900);color:#d1e8e8;border-radius:var(--radius-sm);font-size:12px;line-height:1.6;border-left:3px solid var(--teal-light);"></div>
+  </div>
+
+  <div class="grid-2 mb-14">
+
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div class="card-title" style="margin-bottom:0;"><div class="card-dot" style="background:#f59e0b;"></div>Process Readiness</div>
+            <button class="btn btn-primary btn-sm editor-only" style="display:none;" onclick="openProcessModal()">+ Add Item</button>
+          </div>
+          <div id="processListRef" style="display:flex;flex-direction:column;gap:0;"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><div class="card-dot" style="background:var(--red);"></div>Tariff Reference · Apr 2026</div>
+          <div class="tariff-row"><span>§232 Primary (Steel / Al / Cu)</span><span class="t-rate t-50">50%</span></div>
+          <div class="tariff-row"><span>§232 Derivative (Equip / Comp)</span><span class="t-rate t-25">25%</span></div>
+          <div class="tariff-row"><span>§122 Baseline (Non-§232)</span><span class="t-rate t-10">10%</span></div>
+          <div class="tariff-row"><span>US-Origin Parts</span><span class="t-rate t-0">0%</span></div>
+          <div class="alert-strip">⚠ <strong>Apr 6, 2026:</strong> §232 now applies to full customs value. Update all cost models.</div>
+          <div class="alert-strip" style="margin-top:8px;">⚠ <strong>§122 Expiry ~Jul 24, 2026</strong> — 10% surcharge may lapse.</div>
+        </div>
+
+
+
+  </div>
+
+</div><!-- /tab-reference -->
+
+<!-- ══════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════ -->
+
+<!-- Modal backdrop -->
+<div id="modalBackdrop" onclick="closeModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;"></div>
+
+<!-- Scope modal -->
+<div id="scopeModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:12px;padding:24px;width:520px;max-width:95vw;z-index:201;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+  <div style="font-size:15px;font-weight:700;margin-bottom:16px;" id="scopeModalTitle">Add Commodity</div>
+  <input type="hidden" id="scopeEditId">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+    <div><label style="font-size:11px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:4px;">Commodity Name *</label>
+      <input id="si_name" class="modal-input" placeholder="e.g. Fasteners"></div>
+    <div><label style="font-size:11px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:4px;">§232 Rate</label>
+      <select id="si_rate" class="modal-input">
+        <option value="50%">50%</option><option value="25%">25%</option><option value="10%">10%</option><option value="—">—</option>
+      </select></div>
+    <div><label style="font-size:11px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:4px;">Status *</label>
+      <select id="si_cstatus" class="modal-input">
+        <option value="In Scope">In Scope</option>
+        <option value="Under Review">Under Review</option>
+        <option value="Pipeline - Next Up">Pipeline - Next Up</option>
+        <option value="Excluded">Excluded</option>
+      </select></div>
+  </div>
+  <div style="margin-bottom:16px;"><label style="font-size:11px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:4px;">Notes</label>
+    <textarea id="si_notes" class="modal-input" rows="2" style="resize:vertical;"></textarea></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;">
+    <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary btn-sm" onclick="saveScopeItem()">Save</button>
+  </div>
+</div>
+
+<!-- Update modal -->
+<div id="updateModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:12px;padding:24px;width:460px;max-width:95vw;z-index:201;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+  <div style="font-size:15px;font-weight:700;margin-bottom:16px;" id="updateModalTitle">Add Recent Update</div>
+  <input type="hidden" id="updateEditId">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+    <div><label style="font-size:11px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:4px;">Category *</label>
+      <select id="ui_cat" class="modal-input">
+        <option value="Order">Order</option>
+        <option value="Process">Process</option>
+        <option value="Scope">Scope</option>
+        <option value="Tariff">Tariff</option>
+        <option value="Decision">Decision</option>
+        <option value="Risk">Risk</option>
+      </select></div>
+    <div><label style="font-size:11px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:4px;">Date *</label>
+      <input id="ui_date" type="date" class="modal-input"></div>
+  </div>
+  <div style="margin-bottom:16px;"><label style="font-size:11px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:4px;">Update Text *</label>
+    <textarea id="ui_body" class="modal-input" rows="3" placeholder="Describe the update..." style="resize:vertical;"></textarea></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;">
+    <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary btn-sm" onclick="saveUpdateItem()">Save</button>
+  </div>
+</div>
+
+<!-- Process modal -->
+<div id="processModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:12px;padding:24px;width:460px;max-width:95vw;z-index:201;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+  <div style="font-size:15px;font-weight:700;margin-bottom:16px;" id="processModalTitle">Add Process Item</div>
+  <input type="hidden" id="processEditId">
+  <div style="margin-bottom:12px;"><label style="font-size:11px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:4px;">Title *</label>
+    <input id="pi_title" class="modal-input" placeholder="e.g. Quality Framework"></div>
+  <div style="margin-bottom:12px;"><label style="font-size:11px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:4px;">Status *</label>
+    <select id="pi_status" class="modal-input">
+      <option value="complete">✓ Complete</option>
+      <option value="wip">~ In Progress</option>
+      <option value="open">✗ Not Started / Blocked</option>
+    </select></div>
+  <div style="margin-bottom:16px;"><label style="font-size:11px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:4px;">Detail</label>
+    <textarea id="pi_detail" class="modal-input" rows="2" placeholder="Brief description..." style="resize:vertical;"></textarea></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;">
+    <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary btn-sm" onclick="saveProcessItem()">Save</button>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════
+     TAB 2: ACTION ITEMS
+═══════════════════════════ -->
+<div id="tab-actions" class="tab-panel">
+
+  <div class="actions-toolbar">
+    <div class="actions-toolbar-left">
+      <button class="btn btn-primary btn-sm editor-only" style="display:none;" onclick="toggleAddForm()">+ Add Action Item</button>
+      <button class="btn btn-edit-mode btn-sm editor-only" id="editModeBtn" style="display:none;" onclick="toggleEditMode()">✎ Edit Mode</button>
+      <button class="btn btn-outline btn-sm editor-only" id="cancelEditBtn" style="display:none;" onclick="cancelEditMode()">✕ Cancel</button>
+      <select class="filter-select" style="font-size:12px;padding:6px 10px;" onchange="filterActions(this.value)">
+        <option value="all">All Owners</option>
+        <option value="Daniel Paeslack">Daniel Paeslack</option>
+        <option value="Jake Kelley">Jake Kelley</option>
+        <option value="Mike Mougeotte">Mike Mougeotte</option>
+        <option value="Tom Watts">Tom Watts</option>
+        <option value="Mike M / Tom W">Mike M / Tom W</option>
+      </select>
+      <select class="filter-select" style="font-size:12px;padding:6px 10px;" onchange="filterByStatus(this.value)">
+        <option value="all">All Statuses</option>
+        <option value="Open">Open</option>
+        <option value="In Progress">In Progress</option>
+        <option value="On Hold">On Hold</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="addForm" class="add-row-form">
+    <div class="form-group"><label>Action Item</label><input class="form-input" placeholder="Describe the action..." id="newActionText"></div>
+    <div class="form-group"><label>Owner</label><input class="form-input form-input-sm" placeholder="Name" id="newOwner"></div>
+    <div class="form-group"><label>Due Date</label><input class="form-input form-input-sm" type="date" id="newDue"></div>
+    <div class="form-group"><label>Status</label>
+      <select class="form-input form-input-sm" id="newStatus">
+        <option>Open</option><option>In Progress</option><option>On Hold</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Flag <span style="font-weight:400;font-size:11px;">(optional)</span></label>
+      <div style="display:flex;gap:6px;">
+        <select class="form-input form-input-sm" id="newFlagType" style="width:120px;">
+          <option value="">None</option>
+          <option value="warning">⚠ Warning</option>
+          <option value="hold">⏸ On Hold</option>
+          <option value="info">ℹ Info</option>
+          <option value="urgent">🔴 Urgent</option>
+        </select>
+        <input class="form-input form-input-sm" id="newFlagText" placeholder="Flag text..." style="flex:1;">
+      </div>
+    </div>
+    <div class="form-group"><label>&nbsp;</label>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-primary btn-sm" onclick="addAction()">Add</button>
+        <button class="btn btn-outline btn-sm" onclick="toggleAddForm()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden;">
+    <table class="action-table" id="actionTable">
+      <thead>
+        <tr>
+          <th style="width:26px;"></th>
+          <th style="width:36px;" title="Expand for notes"></th>
+          <th>Action Item</th>
+          <th style="width:150px;">Owner</th>
+          <th style="width:110px;">Due Date</th>
+          <th style="width:120px;">Status</th>
+          <th style="width:60px;"></th>
+        </tr>
+      </thead>
+      <tbody id="actionBody"></tbody>
+    </table>
+  </div>
+
+  <div class="completed-section">
+    <div class="completed-toggle" onclick="toggleCompleted()">▶ Completed Items (2)</div>
+    <div id="completedList" style="display:none;">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table class="action-table">
+          <tbody>
+            <tr class="done">
+              <td style="text-align:center;color:#22c55e;font-size:16px;">✓</td>
+              <td class="action-text-cell" style="text-decoration:line-through;color:var(--gray-400);">Share Daniel's SDE spare parts list with the team</td>
+              <td><span class="badge badge-gray">Jake Kelley</span></td>
+              <td style="font-family:var(--mono);font-size:12px;color:var(--gray-400);">Apr 23, 2026</td>
+              <td><span class="badge badge-green">Done</span></td>
+              <td></td>
+            </tr>
+            <tr class="done">
+              <td style="text-align:center;color:#22c55e;font-size:16px;">✓</td>
+              <td class="action-text-cell" style="text-decoration:line-through;color:var(--gray-400);">Send NBG purchase history report to the team</td>
+              <td><span class="badge badge-gray">Jake Kelley</span></td>
+              <td style="font-family:var(--mono);font-size:12px;color:var(--gray-400);">Apr 23, 2026</td>
+              <td><span class="badge badge-green">Done</span></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div><!-- /tab-actions -->
+
+
+
+<!-- ═══════════════════════════
+     TAB 4: ANALYTICS
+═══════════════════════════ -->
+<div id="tab-analytics" class="tab-panel">
+
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:20px;flex-wrap:wrap;">
+    <div>
+      <div style="font-size:16px;font-weight:700;color:var(--gray-700);">Analytics & Cost Intelligence</div>
+      <div style="font-size:13px;color:var(--gray-400);margin-top:2px;">FY2025 actuals (SDE spare parts scope) · cost avoidance card pending implementation</div>
+    </div>
+    <!-- Shared commodity filter -->
+    <div style="display:flex;flex-direction:column;gap:6px;min-width:300px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--gray-500);">Filter by Commodity Group</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select id="commFilter" multiple size="1" style="flex:1;padding:8px 10px;border:1px solid var(--gray-300);border-radius:var(--radius-sm);font-size:15px;font-family:var(--font);color:var(--gray-700);background:white;min-width:240px;" onchange="applyCommFilter()">
+          <option value="all" selected>All Commodities</option>
+          <option value="Bearings">Bearings</option>
+          <option value="Fasteners">Fasteners</option>
+          <option value="Valve Parts">Valve Parts</option>
+          <option value="Gland Bushings">Gland Bushings</option>
+          <option value="Guides & Bushings">Guides &amp; Bushings</option>
+          <option value="Rings">Rings</option>
+          <option value="Oil Sealing Ring">Oil Sealing Ring</option>
+          <option value="BBC Legacy Segments">Steam Seals</option>
+          <option value="Instruments">Instruments</option>
+          <option value="Gaskets">Gaskets</option>
+          <option value="Springs">Springs</option>
+          <option value="Oil Unit & Steam Unit (Aux.)">Oil Unit &amp; Steam Aux.</option>
+          <option value="Minor Parts">Minor Parts</option>
+          <option value="HP Steam Inlet Pipes">HP Steam Inlet Pipes</option>
+          <option value="Oil Sealing Rings">Oil Sealing Rings</option>
+          <option value="Couplings">Couplings</option>
+          <option value="Plates / Sheets">Plates / Sheets</option>
+          <option value="Sealing Strips">Sealing Strips</option>
+          <option value="Rods">Rods</option>
+          <option value="Calottes">Calottes</option>
+          <option value="Piston">Piston</option>
+          <option value="Flanges">Flanges</option>
+          <option value="O-Rings">O-Rings</option>
+          <option value="Covers">Covers</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="resetCommFilter()" style="white-space:nowrap;">Reset</button>
+      </div>
+      <div style="font-size:11px;color:var(--gray-400);">Hold Ctrl / Cmd to select multiple groups</div>
+    </div>
+  </div>
+
+
+  <div class="analytics-grid">
+
+    <!-- Annual Spend -->
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div class="chart-title">Annual Spend by Commodity</div>
+        <div class="chart-sub">Top 11 commodity groups by FY2025 NBG intercompany spend · SDE spare parts only (USD thousands)</div>
+        <div style="display:flex;gap:14px;margin-top:6px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-500);"><span style="width:10px;height:10px;border-radius:2px;background:#009999;display:inline-block;"></span> In Scope</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-500);"><span style="width:10px;height:10px;border-radius:2px;background:#b45309;display:inline-block;opacity:0.7;"></span> Pipeline</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-500);"><span style="width:10px;height:10px;border-radius:2px;background:#ced4da;display:inline-block;"></span> Other</div>
+        </div>
+      </div>
+      <div class="chart-grow" style="gap:6px;padding:10px 0 0;min-height:130px;" id="spendChart"></div>
+      <div style="display:flex;justify-content:space-around;padding:5px 0 0;font-size:10px;color:var(--gray-500);flex-wrap:wrap;gap:2px;" id="spendLabels"></div>
+    </div>
+
+    <!-- Annual Savings Potential -->
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div class="chart-title" style="display:flex;align-items:center;gap:8px;">
+        Annual Savings Potential
+        <span class="about-btn" title="Assumptions:&#10;&#10;Saving = NBG landed cost (supplier price + all import duty) minus projected US-sourced cost.&#10;&#10;Purchase price reductions (based on initial RFQ investigation):&#10;• Bearings: −73%&#10;• Fasteners: −59%&#10;• Valve Parts: −67%&#10;• All other commodity groups: −10% (conservative estimate)&#10;&#10;Duty avoidance: full import duty avoided on all US-sourced parts (no §232 tariff on domestic purchases).&#10;&#10;FY2025 actuals from NBG OTD/Tariff Report. SDE spare parts scope only." style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:#e5e7eb;color:#6c757d;font-size:11px;font-weight:700;cursor:help;flex-shrink:0;border:1px solid #d1d5db;">?</span>
+      </div>
+        <div class="chart-sub">NBG landed cost (supplier price + all import duty) vs. projected US-sourced cost · filter to drill into groups</div>
+        <div style="display:flex;gap:14px;margin-top:6px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-500);"><span style="width:12px;height:12px;border-radius:2px;background:#8b95a1;display:inline-block;"></span> NBG Supplier Cost</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-500);"><span style="width:12px;height:12px;border-radius:2px;background:#e74c3c;opacity:0.8;display:inline-block;"></span> Import Duty</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-500);"><span style="width:12px;height:12px;border-radius:2px;background:#009999;display:inline-block;"></span> US-Sourced Cost</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;min-height:160px;flex-shrink:0;padding:8px 0 0;" id="svChart"></div>
+      <div id="svStats" style="display:flex;gap:10px;margin-top:10px;align-items:flex-end;flex-wrap:wrap;"></div>
+    </div>
+
+    <!-- Monthly Cost Avoidance -->
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div class="chart-title">Monthly Cost Avoidance <span class="placeholder-tag">📊 Placeholder</span></div>
+        <div class="chart-sub">Tariff savings realized by routing orders to US suppliers (USD thousands)</div>
+        <div style="background:#fff8e1;border:1px solid #fcd34d;border-radius:var(--radius-sm);padding:7px 11px;margin-top:6px;font-size:12px;color:#92400e;display:flex;align-items:flex-start;gap:8px;">
+          <span style="flex-shrink:0;">⏳</span>
+          <span><strong>Pending implementation</strong> — will update with actuals once local sourcing orders are placed.</span>
+        </div>
+        <div style="display:flex;gap:14px;margin-top:8px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-500);"><span style="width:12px;height:12px;border-radius:2px;background:#009999;display:inline-block;"></span> Actual</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-500);"><span style="width:12px;height:12px;border-radius:2px;background:#007a7a;display:inline-block;"></span> Current Month</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-500);"><span style="width:12px;height:12px;border-radius:2px;background:#e6f4f4;border:1.5px dashed #009999;display:inline-block;"></span> Forecast</div>
+        </div>
+      </div>
+      <div class="chart-grow" style="gap:6px;padding:8px 0 0;min-height:120px;" id="caChart"></div>
+      <div style="display:flex;gap:6px;padding:4px 0 0;font-family:var(--mono);font-size:9px;color:var(--gray-400);" id="caLabels"></div>
+      <div id="caStats" style="display:flex;gap:20px;margin-top:8px;flex-wrap:wrap;"></div>
+    </div>
+
+    <!-- Monthly PVO -->
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div class="chart-title">Monthly Purchase Volume — NBG · FY2025</div>
+        <div class="chart-sub">Monthly NBG intercompany spend (USD thousands) · FY2025</div>
+        <div style="display:flex;gap:14px;margin-top:6px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-500);"><span style="width:12px;height:12px;border-radius:2px;background:#009999;display:inline-block;"></span> SDE Spare Parts</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-500);"><span style="width:12px;height:12px;border-radius:2px;background:#ced4da;display:inline-block;"></span> Other NBG Spend</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:160px;padding:8px 0 0;flex-shrink:0;" id="pvoChart"></div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0 0;font-family:var(--mono);font-size:9px;color:var(--gray-400);" id="pvoLabels"></div>
+      <div id="pvoStats" style="display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-100);flex-wrap:wrap;"></div>
+    </div>
+
+  </div>
+</div><!-- /tab-analytics -->
+
+
+</div><!-- /content -->
+</div><!-- /shell -->
+
+<script>
+
+// ══════════════════════════════════════════════
+var KEYS = { scope: 'es_scope', updates: 'es_updates', process: 'es_process' };
+var NOTES_STORAGE = 'es_action_notes'; // localStorage key for notes (also synced to Supabase)
+
+// ── DEFAULT SEED DATA ──
+var DEFAULT_SCOPE = [
+  { id:1, name:'Fasteners',           rate:'50%', cstatus:'In Scope',           notes:'Quoting underway for Quinnesec C5757; ECRs required for US-equiv. materials', sort_order:0 },
+  { id:2, name:'Springs',             rate:'50%', cstatus:'In Scope',           notes:'Quoted with EU-spec materials; awaiting demand routing process & kickoff',     sort_order:1 },
+  { id:3, name:'Rings',               rate:'50%', cstatus:'Pipeline - Next Up', notes:'Most likely next scope addition; blocked by German-only documents',            sort_order:2 },
+  { id:4, name:'Bearings',            rate:'25%', cstatus:'Under Review',       notes:'Waukesha familiar with parts; pending scope expansion alignment',             sort_order:3 },
+  { id:5, name:'Valve Stems & Seats', rate:'25%', cstatus:'Under Review',       notes:'\u221267% quoted but FSP-based; NBG scope evaluation not done',              sort_order:4 },
+  { id:6, name:'Blades',              rate:'25%', cstatus:'Under Review',       notes:'Insufficient document access & PCC support',                                  sort_order:5 },
+  { id:7, name:'Shaft Seals',         rate:'\u2014', cstatus:'Excluded',        notes:'Too complex for local sourcing per NBG',                                       sort_order:6 },
+  { id:8, name:'FSP Parts (all)',     rate:'\u2014', cstatus:'Excluded',        notes:'All Finsp\u00e5ng parts excluded per leadership direction',                    sort_order:7 }
+];
+
+var DEFAULT_UPDATES = [
+  { id:1, cat:'Order',    date:'2026-04-23', body:'Quinnesec C5757 pilot order active. Fastener quotes in progress \u2014 risk US suppliers cannot respond before booking deadline.', sort_order:0 },
+  { id:2, cat:'Process',  date:'2026-04-23', body:'ECRs confirmed as required path for material substitutions. One-time deviations will not be accepted. DIN \u2192 ASTM matrix still needed.', sort_order:1 },
+  { id:3, cat:'Process',  date:'2026-04-23', body:'SAP demand routing confirmed via nightly batch. DLPs for RFQ workflow in preparation. SAM Quality onboarding not yet started.', sort_order:2 },
+  { id:4, cat:'Decision', date:'2026-04-23', body:'50% \u00a7232 commodities prioritized first. Rings identified as most likely next scope addition.', sort_order:3 },
+  { id:5, cat:'Tariff',   date:'2026-04-06', body:'\u00a7232 tariff base changed to full customs value. All landed cost models must be updated.', sort_order:4 },
+  { id:6, cat:'Tariff',   date:'2026-04-01', body:'\u00a7201 and \u00a7301 tariff investigations announced. Could expand exposure on in-scope commodities.', sort_order:5 },
+  { id:7, cat:'Scope',    date:'2026-03-01', body:'FSP (Finsp\u00e5ng) formally excluded. NBG (Nuremberg) confirmed as sole PCC in scope.', sort_order:6 },
+  { id:8, cat:'Process',  date:'2026-04-23', body:'FAST confirmed as receiving location. Comprehensive inspection capability not available \u2014 NBG guidance needed.', sort_order:7 }
+];
+
+var DEFAULT_PROCESS = [
+  { id:1, status:'wip',  title:'MRP / SAP Demand Routing',     detail:'Plant 4200 MRP nightly batch in place. DLPs in preparation.',                                     sort_order:0 },
+  { id:2, status:'open', title:'Quality Framework',             detail:'SAM Quality not set up for Euro steam. ILot clearing, NCR routing unresolved.',                   sort_order:1 },
+  { id:3, status:'open', title:'Document Access (Globus)',      detail:'Unable to verify completeness or revision currency of supplier-facing docs.',                      sort_order:2 },
+  { id:4, status:'open', title:'Material Substitution Process', detail:'ECRs required per Mike V. DIN \u2192 ASTM crosswalk table needed.',                               sort_order:3 },
+  { id:5, status:'open', title:'FAST Receiving & Inspection',   detail:'No comprehensive inspection capability at FAST. NBG guidance needed.',                             sort_order:4 },
+  { id:6, status:'wip',  title:'NBG Engineering Support',       detail:'20-hr PO issued. Standing PO needed. ECRs preferred over one-time deviations.',                   sort_order:5 }
+];
+
+// DRAG-TO-REORDER
+// Works on any <tbody> — pass the tbody element.
+// After a drop, calls an optional onReorder(tbody) callback.
+// ══════════════════════════════════════════════
+var _dragSrc = null;
+
+function initDraggable(tbody, onReorder) {
+  // Wire dragstart on each row (must be on the element)
+  Array.from(tbody.rows).forEach(function(row) {
+    makeDraggableRow(row, tbody);
+  });
+
+  // dragover + drop on tbody via event delegation
+  // This fires reliably even when cursor is over a <td> or child element
+  tbody.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    var target = closestRow(e.target, tbody);
+    if (target && target !== _dragSrc) {
+      Array.from(tbody.rows).forEach(function(r) { r.classList.remove('drag-over'); });
+      target.classList.add('drag-over');
+    }
+  });
+
+  tbody.addEventListener('dragleave', function(e) {
+    // Only clear if leaving the tbody entirely
+    if (!tbody.contains(e.relatedTarget)) {
+      Array.from(tbody.rows).forEach(function(r) { r.classList.remove('drag-over'); });
+    }
+  });
+
+  tbody.addEventListener('drop', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var target = closestRow(e.target, tbody);
+    Array.from(tbody.rows).forEach(function(r) { r.classList.remove('drag-over'); });
+    if (!target || !_dragSrc || target === _dragSrc || !tbody.contains(_dragSrc)) return;
+    var rect = target.getBoundingClientRect();
+    if (e.clientY < rect.top + rect.height / 2) {
+      tbody.insertBefore(_dragSrc, target);
+    } else {
+      target.after(_dragSrc);
+    }
+    if (onReorder) onReorder(tbody);
+  });
+
+  // Observe future rows
+  if (tbody._dragObserver) tbody._dragObserver.disconnect();
+  var obs = new MutationObserver(function(muts) {
+    muts.forEach(function(m) {
+      m.addedNodes.forEach(function(n) {
+        if (n.nodeName === 'TR' && !n.getAttribute('draggable')) {
+          makeDraggableRow(n, tbody);
+        }
+      });
+    });
+  });
+  obs.observe(tbody, { childList: true });
+  tbody._dragObserver = obs;
+}
+
+// Walk up from an element to find the nearest <tr> that is a direct child of tbody
+function closestRow(el, tbody) {
+  while (el && el !== tbody) {
+    if (el.nodeName === 'TR' && el.parentNode === tbody &&
+        !el.classList.contains('action-notes-row') && !el.classList.contains('done')) {
+      return el;
+    }
+    el = el.parentNode;
+  }
+  return null;
+}
+
+function makeDraggableRow(row, tbody) {
+  // Skip notes rows and completed rows
+  if (row.classList.contains('action-notes-row') || row.classList.contains('done')) return;
+  if (row.getAttribute('draggable')) return; // already wired
+  row.setAttribute('draggable', 'true');
+  row.addEventListener('dragstart', function(e) {
+    _dragSrc = row;
+    row.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+  });
+  row.addEventListener('dragend', function() {
+    row.classList.remove('dragging');
+    Array.from(tbody.rows).forEach(function(r) { r.classList.remove('drag-over'); });
+  });
+}
+
+// ── Scope table drag ──
+function initScopeDrag() {
+  var el = document.getElementById('scopeList');
+  if (!el) return;
+  var tbl = el.querySelector('table');
+  if (!tbl) return;
+  initDraggable(tbl.tBodies[0] || tbl, function() { saveScopeOrder(); });
+}
+
+function saveScopeOrder() {
+  // Re-read row order from DOM and persist to localStorage
+  var el = document.getElementById('scopeList');
+  if (!el) return;
+  var rows = el.querySelectorAll('tr[data-scope-id]');
+  if (!rows.length) return;
+  var data = loadData(KEYS.scope, DEFAULT_SCOPE);
+  var idOrder = Array.from(rows).map(function(r) { return parseInt(r.getAttribute('data-scope-id')); });
+  var reordered = idOrder.map(function(id) {
+    return data.filter(function(d) { return d.id === id; })[0];
+  }).filter(Boolean);
+  if (reordered.length) { saveData(KEYS.scope, reordered); }
+}
+
+// ── Action items drag ──
+function initActionsDrag() {
+  var tbody = document.getElementById('actionBody');
+  if (!tbody) return;
+  initDraggable(tbody, function() { persistActionOrder(); });
+}
+
+// ── TAB SWITCHING ──
+// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// SUPABASE DATA LAYER
+// Reads/writes to Supabase; falls back to localStorage if offline or unconfigured.
+// Migration path from localStorage: call seedSupabaseFromLocalStorage() once.
+// ══════════════════════════════════════════════
+
+var KEYS = { scope: 'es_scope', updates: 'es_updates', process: 'es_process' };
+var NOTES_STORAGE = 'es_action_notes'; // localStorage key for notes (also synced to Supabase)
+
+// ── CONFIG ──
+var SB_URL_KEY  = 'sb_project_url';
+var SB_KEY_KEY  = 'sb_anon_key';
+var _sb         = null;  // Supabase client instance
+var _isEditor   = false; // Set to true after successful login
+
+function getConfig() {
+  return {
+    url: localStorage.getItem(SB_URL_KEY) || '',
+    key: localStorage.getItem(SB_KEY_KEY) || ''
+  };
+}
+
+function initSupabase() {
+  var cfg = getConfig();
+  if (!cfg.url || !cfg.key) return false;
+  try {
+    _sb = supabase.createClient(cfg.url, cfg.key);
+    return true;
+  } catch(e) { console.warn('Supabase init failed:', e); return false; }
+}
+
+function isConfigured() { return !!(_sb); }
+
+// ── AUTH ──
+function handleLockClick() {
+  if (_isEditor) { showLogoutMenu(); return; }
+  if (!isConfigured()) { showConfigModal(); return; }
+  openLoginModal();
+}
+
+function openLoginModal() {
+  document.getElementById('loginBackdrop').style.display = 'block';
+  document.getElementById('loginModal').style.display = 'block';
+  document.getElementById('loginEmail').focus();
+  document.getElementById('loginError').style.display = 'none';
+}
+function closeLoginModal() {
+  document.getElementById('loginBackdrop').style.display = 'none';
+  document.getElementById('loginModal').style.display = 'none';
+}
+
+async function submitLogin() {
+  var email = document.getElementById('loginEmail').value.trim();
+  var pass  = document.getElementById('loginPassword').value;
+  var btn   = document.getElementById('loginSubmitBtn');
+  var errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+  try {
+    var result = await _sb.auth.signInWithPassword({ email: email, password: pass });
+    if (result.error) throw result.error;
+    _isEditor = true;
+    closeLoginModal();
+    enableEditMode();
+    showToast('✓ Signed in as ' + email);
+  } catch(e) {
+    errEl.textContent = e.message || 'Sign-in failed. Check your credentials.';
+    errEl.style.display = 'block';
+  } finally {
+    btn.textContent = 'Sign In'; btn.disabled = false;
+  }
+}
+
+function enableEditMode() {
+  var btn = document.getElementById('lockBtn');
+  if (btn) { btn.textContent = '🔓 Editor'; btn.style.background = 'rgba(0,200,150,0.25)'; }
+  document.querySelectorAll('.editor-only').forEach(function(el){ el.style.display = ''; });
+  // Re-render actions so add-label buttons appear
+  renderActions();
+  showToast('Edit mode enabled');
+}
+
+function showLogoutMenu() {
+  if (confirm('Sign out of editor mode?')) {
+    if (_sb) _sb.auth.signOut();
+    _isEditor = false;
+    document.getElementById('lockBtn').textContent = '🔒 Edit';
+    document.getElementById('lockBtn').style.background = 'rgba(255,255,255,0.12)';
+    document.querySelectorAll('.editor-only').forEach(function(el){ el.style.display = 'none'; });
+    showToast('Signed out');
+  }
+}
+
+function showConfigModal() {
+  var cfg = getConfig();
+  document.getElementById('cfgUrl').value = cfg.url;
+  document.getElementById('cfgKey').value = cfg.key;
+  document.getElementById('cfgError').style.display = 'none';
+  document.getElementById('configBackdrop').style.display = 'block';
+  document.getElementById('configModal').style.display = 'block';
+}
+function closeConfigModal() {
+  document.getElementById('configBackdrop').style.display = 'none';
+  document.getElementById('configModal').style.display = 'none';
+}
+async function saveConfig() {
+  var url = document.getElementById('cfgUrl').value.trim();
+  var key = document.getElementById('cfgKey').value.trim();
+  var errEl = document.getElementById('cfgError');
+  errEl.style.display = 'none';
+  if (!url || !key) { errEl.textContent = 'Both fields are required.'; errEl.style.display='block'; return; }
+  localStorage.setItem(SB_URL_KEY, url);
+  localStorage.setItem(SB_KEY_KEY, key);
+  if (initSupabase()) {
+    closeConfigModal();
+    showToast('✓ Connected to Supabase');
+    openLoginModal();
+  } else {
+    errEl.textContent = 'Could not connect — check your URL and key.';
+    errEl.style.display = 'block';
+  }
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  var el = document.getElementById('savedFlash');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.opacity = '1';
+  setTimeout(function(){ el.style.opacity = '0'; el.textContent = '✓ Saved'; }, 2200);
+}
+
+// ── CORE DATA FUNCTIONS ──
+// loadData: Supabase if configured, else localStorage
+async function loadDataRemote(table, defaults) {
+  if (!isConfigured()) return loadDataLocal(table, defaults);
+  try {
+    var res = await _sb.from(table).select('*').order('sort_order', { ascending: true });
+    if (res.error) throw res.error;
+    if (!res.data || res.data.length === 0) return loadDataLocal(table, defaults);
+    if (table === KEYS.scope) return migrateScope(res.data);
+    return res.data;
+  } catch(e) {
+    console.warn('Supabase read failed, using localStorage:', e);
+    return loadDataLocal(table, defaults);
+  }
+}
+
+function loadDataLocal(key, defaults) {
+  try {
+    var raw = localStorage.getItem(key);
+    var data = raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(defaults));
+    if (key === KEYS.scope) data = migrateScope(data);
+    return data;
+  } catch(e) { return JSON.parse(JSON.stringify(defaults)); }
+}
+
+// Keep loadData synchronous for legacy callers — returns localStorage data.
+// All render functions should use the async versions below.
+function loadData(key, defaults) {
+  return loadDataLocal(key, defaults);
+}
+
+async function saveDataRemote(table, data) {
+  // Save to localStorage immediately
+  try { localStorage.setItem(table, JSON.stringify(data)); } catch(e) {}
+  if (!isConfigured() || !_isEditor) return;
+  try {
+    // Add sort_order, then upsert all rows
+    var rows = data.map(function(row, i) {
+      return Object.assign({}, row, { sort_order: i });
+    });
+    // Delete all then re-insert to handle deletions cleanly
+    await _sb.from(table).delete().neq('id', -999999);
+    if (rows.length > 0) {
+      var res = await _sb.from(table).insert(rows);
+      if (res.error) throw res.error;
+    }
+  } catch(e) { console.warn('Supabase write failed:', e); }
+}
+
+// saveData: sync to localStorage + async to Supabase
+function saveData(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch(e) {}
+  if (isConfigured() && _isEditor) saveDataRemote(key, data);
+  flashSaved();
+}
+
+// ── NOTES SYNC ──
+async function saveNoteRemote(actionId, text) {
+  if (!isConfigured() || !_isEditor) return;
+  try {
+    await _sb.from('es_action_notes').upsert({ action_id: actionId, notes: text });
+  } catch(e) { console.warn('Note sync failed:', e); }
+}
+
+async function loadAllNotesRemote() {
+  if (!isConfigured()) return null;
+  try {
+    var res = await _sb.from('es_action_notes').select('*');
+    if (res.error || !res.data) return null;
+    var store = {};
+    res.data.forEach(function(r) { store[r.action_id] = r.notes; });
+    return store;
+  } catch(e) { return null; }
+}
+
+// ── INITIAL DATA LOAD ──
+// Called on page load — fetches from Supabase and re-renders
+async function loadAllFromSupabase() {
+  if (!isConfigured()) return;
+  var [scopeData, updatesData, processData, actionsData] = await Promise.all([
+    loadDataRemote(KEYS.scope,   DEFAULT_SCOPE),
+    loadDataRemote(KEYS.updates, DEFAULT_UPDATES),
+    loadDataRemote(KEYS.process, DEFAULT_PROCESS),
+    loadActionsRemote()
+  ]);
+  try {
+    localStorage.setItem(KEYS.scope,   JSON.stringify(scopeData));
+    localStorage.setItem(KEYS.updates, JSON.stringify(updatesData));
+    localStorage.setItem(KEYS.process, JSON.stringify(processData));
+    localStorage.setItem(ACTIONS_KEY,  JSON.stringify(actionsData));
+  } catch(e) {}
+  _actionsCache = actionsData;
+  renderScope();
+  renderBulletin();
+  renderProcess();
+  renderActions();
+}
+
+// ── ONE-TIME SEED: push localStorage data to Supabase ──
+// Call this once from console after first login: seedSupabaseFromLocalStorage()
+async function seedSupabaseFromLocalStorage() {
+  if (!isConfigured() || !_isEditor) { alert('Must be logged in as editor first.'); return; }
+  var tables = [
+    { key: KEYS.scope,   defaults: DEFAULT_SCOPE   },
+    { key: KEYS.updates, defaults: DEFAULT_UPDATES  },
+    { key: KEYS.process, defaults: DEFAULT_PROCESS  },
+  ];
+  for (var t of tables) {
+    var data = loadDataLocal(t.key, t.defaults);
+    var rows = data.map(function(r, i){ return Object.assign({}, r, { sort_order: i }); });
+    var del = await _sb.from(t.key).delete().neq('id', -999999);
+    if (del.error) { console.error('Seed delete error:', del.error); continue; }
+    if (rows.length) {
+      var ins = await _sb.from(t.key).insert(rows);
+      if (ins.error) console.error('Seed insert error for', t.key, ins.error);
+      else console.log('Seeded', t.key, '—', rows.length, 'rows');
+    }
+  }
+  // Seed actions (Option B — notes embedded on row)
+  var actionsData = loadActionsLocal();
+  // Merge any existing notes from localStorage into action rows
+  var notesStore = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}');
+  actionsData = actionsData.map(function(item) {
+    var domId = 'a' + item.id;
+    if (notesStore[domId] && !item.notes) item.notes = notesStore[domId];
+    return item;
+  });
+  var actDel = await _sb.from('es_actions').delete().neq('id', -999999);
+  if (actDel.error) { console.error('Seed delete error (actions):', actDel.error); }
+  else if (actionsData.length) {
+    var rows = actionsData.map(function(r, i){
+      return Object.assign({}, r, { sort_order: i, flags: JSON.stringify(r.flags||[]) });
+    });
+    var ins = await _sb.from('es_actions').insert(rows);
+    if (ins.error) console.error('Seed insert error (actions):', ins.error);
+    else console.log('Seeded es_actions —', rows.length, 'rows');
+  }
+  console.log('✓ Seed complete');
+  alert('Seed complete — all local data pushed to Supabase.');
+}
+
+function migrateScope(data) {
+  // Map old status+invest schema → new cstatus schema
+  var statusMap = {
+    'in-scope':      'In Scope',
+    'pipeline':      'Pipeline - Next Up',
+    'consideration': 'Under Review',
+    'excluded':      'Excluded'
+  };
+  return data.map(function(row) {
+    if (!row.cstatus) {
+      // Derive cstatus from old status field
+      row.cstatus = statusMap[row.status] || statusMap[row.invest] || 'Under Review';
+    }
+    return row;
+  });
+}
+
+function loadData(key, defaults) {
+  try {
+    var raw = localStorage.getItem(key);
+    var data = raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(defaults));
+    // Migrate scope data if needed
+    if (key === KEYS.scope) data = migrateScope(data);
+    return data;
+  } catch(e) { return JSON.parse(JSON.stringify(defaults)); }
+}
+function saveData(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch(e) {}
+}
+function nextId(arr) {
+  return arr.length === 0 ? 1 : Math.max.apply(null, arr.map(function(x){return x.id;})) + 1;
+}
+
+// ── BADGE HELPERS ──
+var STATUS_COLORS = {
+  'In Scope':           { dot:'var(--green)',    border:'var(--green)' },
+  'Under Review':       { dot:'var(--gray-400)', border:'var(--gray-300)' },
+  'Pipeline - Next Up': { dot:'var(--amber)',    border:'var(--amber)' },
+  'Excluded':           { dot:'var(--red)',      border:'var(--red)' }
+};
+var STATUS_BG = { 'In Scope':'#ffffff','Pipeline - Next Up':'#fffbf0','Under Review':'#ffffff','Excluded':'#fdf9f9' };
+
+var BADGE_MAP = {
+  'In Scope':'badge-green','Under Review':'badge-yellow',
+  'Pipeline - Next Up':'badge-yellow','Excluded':'badge-gray',
+  'In Progress':'badge-yellow','Pending':'badge-yellow','Blocked':'badge-red',
+  'Not Started':'badge-gray','✓ Complete':'badge-green','Stalled':'badge-red'
+};
+function badge(text) {
+  var cls = BADGE_MAP[text] || 'badge-gray';
+  return '<span class="badge ' + cls + '">' + text + '</span>';
+}
+
+var CAT_STYLES = {
+  'Order':    { bg:'var(--amber-pale)',   color:'var(--amber)',  border:'var(--amber)' },
+  'Process':  { bg:'var(--indigo-pale)',  color:'var(--indigo)', border:'#6366f1' },
+  'Scope':    { bg:'var(--teal-pale)',    color:'var(--teal)',   border:'var(--teal)' },
+  'Tariff':   { bg:'#fdecea',            color:'#c0392b',       border:'#c0392b' },
+  'Decision': { bg:'var(--amber-pale)',   color:'var(--amber)',  border:'var(--amber)' },
+  'Risk':     { bg:'#fdecea',            color:'#c0392b',       border:'#c0392b' }
+};
+function fmtDate(d) {
+  if (!d) return '';
+  try {
+    var p = d.split('-');
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[parseInt(p[1])-1] + ' ' + parseInt(p[2]) + ', ' + p[0];
+  } catch(e) { return d; }
+}
+
+var PROC_ICONS = { complete:{ cls:'p-done', sym:'✓' }, wip:{ cls:'p-wip', sym:'~' }, open:{ cls:'p-open', sym:'✗' } };
+
+// ══════════════════════════════════════════════
+// RENDER FUNCTIONS
+// ══════════════════════════════════════════════
+
+function renderScope() {
+  var data = loadData(KEYS.scope, DEFAULT_SCOPE);
+  var el = document.getElementById('scopeList');
+  if (!el) return;
+
+  var table = document.createElement('table');
+  table.className = 'scope-table';
+  var tbody = document.createElement('tbody');
+  table.appendChild(tbody);
+
+  data.forEach(function(row) {
+    var sc = STATUS_COLORS[row.cstatus] || STATUS_COLORS['Under Review'];
+    var bg = STATUS_BG[row.cstatus] || '#ffffff';
+    var rateCls = row.rate === '50%' ? 'badge-red' : row.rate === '25%' ? 'badge-yellow' : 'badge-gray';
+
+    var tr = document.createElement('tr');
+    tr.setAttribute('data-scope-id', row.id);
+    tr.style.cssText = 'border-left:3px solid ' + sc.border + ';background:' + bg + ';';
+
+    tr.innerHTML =
+      '<td style="padding:0 2px;cursor:grab;"><span class="drag-handle" title="Drag to reorder">&#x2630;</span></td>' +
+      '<td style="text-align:center;padding-left:4px;"><span style="width:9px;height:9px;border-radius:50%;background:' + sc.dot + ';display:inline-block;"></span></td>' +
+      '<td><span style="font-weight:600;">' + esc(row.name) + '</span></td>' +
+      '<td><span class="badge ' + rateCls + '" style="font-size:11px;">' + esc(row.rate) + '</span></td>' +
+      '<td>' + badge(row.cstatus) + '</td>' +
+      '<td style="color:var(--gray-500);font-size:13px;">' + esc(row.notes) + '</td>' +
+      '<td style="text-align:right;padding-right:10px;white-space:nowrap;">' +
+        '<button class="icon-btn" title="Edit" onclick="openScopeModal(' + row.id + ')">✎</button>' +
+        ' <button class="icon-btn icon-btn-del" title="Delete" onclick="deleteScopeItem(' + row.id + ')">✕</button>' +
+      '</td>';
+
+    tbody.appendChild(tr);
+  });
+
+  el.innerHTML = '';
+  if (data.length === 0) {
+    var empty = mkEl('div', 'text-align:center;padding:32px 16px;color:#8b95a1;', '');
+    empty.appendChild(mkEl('div', 'font-size:28px;margin-bottom:8px;', '📋'));
+    empty.appendChild(mkEl('div', 'font-size:14px;font-weight:600;margin-bottom:4px;', 'No commodities yet'));
+    empty.appendChild(mkEl('div', 'font-size:13px;', 'Click + Add Commodity to get started.'));
+    el.appendChild(empty);
+  } else {
+    el.appendChild(table);
+    initScopeDrag();
+  }
+}
+
+function renderBulletin() {
+  var data = loadData(KEYS.updates, DEFAULT_UPDATES);
+  // sort newest first
+  data.sort(function(a,b){ return b.date > a.date ? 1 : b.date < a.date ? -1 : b.id - a.id; });
+  var el = document.getElementById('bulletinList');
+  if (!el) return;
+  el.innerHTML = '';
+  if (data.length === 0) {
+    var empty = document.createElement('div');
+    empty.style.cssText = 'text-align:center;padding:32px 16px;color:#8b95a1;';
+    empty.innerHTML = '<div style="font-size:28px;margin-bottom:8px;">📌</div><div style="font-size:14px;font-weight:600;margin-bottom:4px;">No updates yet</div><div style="font-size:13px;">Click + Add to post a recent update.</div>';
+    el.appendChild(empty);
+    return;
+  }
+  data.forEach(function(row) {
+    var cs = CAT_STYLES[row.cat] || CAT_STYLES['Process'];
+    var div = document.createElement('div');
+    div.className = 'bulletin-card';
+    div.style.borderLeftColor = cs.border;
+    div.innerHTML =
+      '<div class="bulletin-meta">' +
+        '<span class="bulletin-tag" style="background:' + cs.bg + ';color:' + cs.color + ';">' + esc(row.cat) + '</span>' +
+        '<span class="bulletin-date">' + fmtDate(row.date) + '</span>' +
+        '<div style="display:flex;gap:5px;margin-left:auto;">' +
+          '<button class="icon-btn" title="Edit" onclick="openUpdateModal(' + row.id + ')">✎</button>' +
+          '<button class="icon-btn icon-btn-del" title="Delete" onclick="deleteUpdateItem(' + row.id + ')">✕</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bulletin-body">' + esc(row.body) + '</div>';
+    el.appendChild(div);
+  });
+}
+
+
+function renderProcess() {
+  var data = loadData(KEYS.process, DEFAULT_PROCESS);
+  var el = document.getElementById('processListRef');
+  if (!el) return;
+  el.innerHTML = '';
+  if (data.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:32px 16px;color:#8b95a1;"><div style="font-size:28px;margin-bottom:8px;">⚙️</div><div style="font-size:14px;font-weight:600;margin-bottom:4px;">No process items yet</div><div style="font-size:13px;">Click + Add Item to track process readiness.</div></div>';
+    return;
+  }
+  data.forEach(function(row) {
+    var ic = PROC_ICONS[row.status] || PROC_ICONS['open'];
+    var div = document.createElement('div');
+    div.className = 'proc-step';
+    div.style.cssText = 'position:relative;padding-right:56px;';
+    div.innerHTML =
+      '<div class="proc-icon ' + ic.cls + '">' + ic.sym + '</div>' +
+      '<div class="proc-body" style="flex:1;">' +
+        '<strong>' + esc(row.title) + '</strong>' +
+        '<small>' + esc(row.detail) + '</small>' +
+      '</div>' +
+      '<div style="position:absolute;right:0;top:50%;transform:translateY(-50%);display:flex;gap:5px;">' +
+        '<button class="icon-btn" title="Edit" onclick="openProcessModal(' + row.id + ')">✎</button>' +
+        '<button class="icon-btn icon-btn-del" title="Delete" onclick="deleteProcessItem(' + row.id + ')">✕</button>' +
+      '</div>';
+    el.appendChild(div);
+  });
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════════════
+// MODAL — open / close
+// ══════════════════════════════════════════════
+
+function showModal(id) {
+  document.getElementById('modalBackdrop').style.display = 'block';
+  document.getElementById(id).style.display = 'block';
+}
+function closeModal() {
+  document.getElementById('modalBackdrop').style.display = 'none';
+  ['scopeModal','updateModal','processModal'].forEach(function(id){
+    var m = document.getElementById(id);
+    if (m) m.style.display = 'none';
+  });
+}
+
+// ── SCOPE MODAL ──
+function openScopeModal(id) {
+  document.getElementById('scopeModalTitle').textContent = id ? 'Edit Commodity' : 'Add Commodity';
+  document.getElementById('scopeEditId').value = id || '';
+  if (id) {
+    var data = loadData(KEYS.scope, DEFAULT_SCOPE);
+    var row = data.filter(function(r){return r.id===id;})[0];
+    if (!row) return;
+    document.getElementById('si_name').value   = row.name;
+    document.getElementById('si_rate').value   = row.rate;
+    document.getElementById('si_cstatus').value = row.cstatus || 'Under Review';
+    document.getElementById('si_notes').value  = row.notes;
+  } else {
+    ['si_name','si_notes'].forEach(function(f){ document.getElementById(f).value=''; });
+    document.getElementById('si_rate').value   = '50%';
+    document.getElementById('si_cstatus').value = 'Under Review';
+  }
+  showModal('scopeModal');
+}
+function saveScopeItem() {
+  var name = document.getElementById('si_name').value.trim();
+  if (!name) { alert('Commodity name is required.'); return; }
+  var data = loadData(KEYS.scope, DEFAULT_SCOPE);
+  var editId = parseInt(document.getElementById('scopeEditId').value) || null;
+  var row = {
+    id:      editId || nextId(data),
+    name:    name,
+    rate:    document.getElementById('si_rate').value,
+    cstatus: document.getElementById('si_cstatus').value,
+    notes:   document.getElementById('si_notes').value.trim()
+  };
+  if (editId) {
+    data = data.map(function(r){ return r.id===editId ? row : r; });
+  } else {
+    data.push(row);
+  }
+  saveData(KEYS.scope, data);
+  closeModal();
+  renderScope();
+  flashSaved();
+}
+function deleteScopeItem(id) {
+  if (!confirm('Delete this commodity row?')) return;
+  var data = loadData(KEYS.scope, DEFAULT_SCOPE).filter(function(r){return r.id!==id;});
+  saveData(KEYS.scope, data);
+  renderScope();
+  flashSaved();
+}
+
+// ── UPDATE MODAL ──
+function openUpdateModal(id) {
+  document.getElementById('updateModalTitle').textContent = id ? 'Edit Update' : 'Add Recent Update';
+  document.getElementById('updateEditId').value = id || '';
+  if (id) {
+    var data = loadData(KEYS.updates, DEFAULT_UPDATES);
+    var row = data.filter(function(r){return r.id===id;})[0];
+    if (!row) return;
+    document.getElementById('ui_cat').value  = row.cat;
+    document.getElementById('ui_date').value = row.date;
+    document.getElementById('ui_body').value = row.body;
+  } else {
+    document.getElementById('ui_cat').value  = 'Process';
+    document.getElementById('ui_date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('ui_body').value = '';
+  }
+  showModal('updateModal');
+}
+function saveUpdateItem() {
+  var body = document.getElementById('ui_body').value.trim();
+  var date = document.getElementById('ui_date').value;
+  if (!body || !date) { alert('Date and update text are required.'); return; }
+  var data = loadData(KEYS.updates, DEFAULT_UPDATES);
+  var editId = parseInt(document.getElementById('updateEditId').value) || null;
+  var row = {
+    id:   editId || nextId(data),
+    cat:  document.getElementById('ui_cat').value,
+    date: date,
+    body: body
+  };
+  if (editId) {
+    data = data.map(function(r){ return r.id===editId ? row : r; });
+  } else {
+    data.push(row);
+  }
+  saveData(KEYS.updates, data);
+  closeModal();
+  renderBulletin();
+  flashSaved();
+}
+function deleteUpdateItem(id) {
+  if (!confirm('Delete this update?')) return;
+  var data = loadData(KEYS.updates, DEFAULT_UPDATES).filter(function(r){return r.id!==id;});
+  saveData(KEYS.updates, data);
+  renderBulletin();
+  flashSaved();
+}
+
+// ── PROCESS MODAL ──
+function openProcessModal(id) {
+  document.getElementById('processModalTitle').textContent = id ? 'Edit Process Item' : 'Add Process Item';
+  document.getElementById('processEditId').value = id || '';
+  if (id) {
+    var data = loadData(KEYS.process, DEFAULT_PROCESS);
+    var row = data.filter(function(r){return r.id===id;})[0];
+    if (!row) return;
+    document.getElementById('pi_title').value  = row.title;
+    document.getElementById('pi_status').value = row.status;
+    document.getElementById('pi_detail').value = row.detail;
+  } else {
+    document.getElementById('pi_title').value  = '';
+    document.getElementById('pi_status').value = 'open';
+    document.getElementById('pi_detail').value = '';
+  }
+  showModal('processModal');
+}
+function saveProcessItem() {
+  var title = document.getElementById('pi_title').value.trim();
+  if (!title) { alert('Title is required.'); return; }
+  var data = loadData(KEYS.process, DEFAULT_PROCESS);
+  var editId = parseInt(document.getElementById('processEditId').value) || null;
+  var row = {
+    id:     editId || nextId(data),
+    title:  title,
+    status: document.getElementById('pi_status').value,
+    detail: document.getElementById('pi_detail').value.trim()
+  };
+  if (editId) {
+    data = data.map(function(r){ return r.id===editId ? row : r; });
+  } else {
+    data.push(row);
+  }
+  saveData(KEYS.process, data);
+  closeModal();
+  renderProcess();
+  flashSaved();
+}
+function deleteProcessItem(id) {
+  if (!confirm('Delete this process item?')) return;
+  var data = loadData(KEYS.process, DEFAULT_PROCESS).filter(function(r){return r.id!==id;});
+  saveData(KEYS.process, data);
+  renderProcess();
+  flashSaved();
+}
+
+// ── SAVED FLASH ──
+function flashSaved() {
+  showToast('✓ Saved');
+  var dateEl = document.getElementById('lastUpdatedDate');
+  if (dateEl) {
+    var now = new Date();
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    dateEl.textContent = months[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
+  }
+  updateActionCallout();
+}
+
+function toggleProjectSummary() {
+  var body    = document.getElementById('summaryBody');
+  var chevron = document.getElementById('summaryChevron');
+  var hint    = document.querySelector('[onclick="toggleProjectSummary()"] span:last-child');
+  if (!body) return;
+  var isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (chevron) chevron.textContent = isOpen ? '\u25b8' : '\u25be';
+  if (hint)    hint.textContent    = isOpen ? 'Click to expand' : 'Click to collapse';
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+  var panel = document.getElementById('tab-' + name);
+  if (panel) panel.classList.add('active');
+  if (el) el.classList.add('active');
+}
+
+function switchTabByName(name) {
+  var tabs = document.querySelectorAll('.nav-tab');
+  var labels = ['status','reference','actions','analytics'];
+  var idx = labels.indexOf(name);
+  if (idx >= 0 && tabs[idx]) switchTab(name, tabs[idx]);
+}
+
+function updateActionCallout() {
+  // Action items are stored as DOM rows (not localStorage) — count by data-status attribute
+  var rows = document.querySelectorAll('#actionBody tr');
+  var open = 0; var overdue = 0;
+  rows.forEach(function(row) {
+    var st = row.getAttribute('data-status') || '';
+    if (st !== 'Done' && st !== 'Complete') {
+      open++;
+      var due = row.getAttribute('data-due') || '';
+      if (due && new Date(due) < new Date()) overdue++;
+    }
+  });
+  var textEl = document.getElementById('actionCalloutText');
+  var overdueEl = document.getElementById('actionCalloutOverdue');
+  var badgeEl = document.getElementById('actionsNavBadge');
+  if (textEl) textEl.textContent = open + ' open action' + (open === 1 ? '' : 's');
+  if (overdueEl) overdueEl.textContent = overdue > 0 ? overdue + ' overdue' : '';
+  if (badgeEl) badgeEl.textContent = open;
+}
+function switchToComm(name) {
+  switchTab('commodity', document.querySelectorAll('.nav-tab')[4]);
+  setTimeout(function() {
+    var btn = document.querySelector('.comm-pill[onclick*="' + name + '"]');
+    selectComm(name, btn);
+  }, 50);
+}
+function selectComm(name, btn) {
+  document.querySelectorAll('.commodity-detail').forEach(function(d) { d.style.display = 'none'; });
+  document.querySelectorAll('.comm-pill').forEach(function(p) { p.classList.remove('active'); });
+  var detail = document.getElementById('detail-' + name);
+  if (detail) detail.style.display = 'block';
+  if (btn) btn.classList.add('active');
+}
+
+
+
+
+// ══════════════════════════════════════════════
+// ACTION ITEMS DATA LAYER
+// Seed data — 9 original items extracted from static HTML
+// ══════════════════════════════════════════════
+var ACTIONS_KEY = 'es_actions';
+
+var DEFAULT_ACTIONS = [
+  { id:1, text:'Send notice to Greg Roberts & Stephen Freeman with instructions for next steps on local sourcing', owner:'Daniel Paeslack',  due_date:null, status:'Open',       flags:[], notes:'', completed:false, sort_order:0 },
+  { id:2, text:'Review new presidential proclamation (Apr 2) & map updated §232 scope to NBG parts list',          owner:'Daniel / NBG Team', due_date:null, status:'Open',       flags:[], notes:'', completed:false, sort_order:1 },
+  { id:3, text:'Prepare DLPs for Stephen Freeman\'s team covering the local sourcing RFQ task process',             owner:'Mike Mougeotte',    due_date:null, status:'In Progress', flags:[], notes:'', completed:false, sort_order:2 },
+  { id:4, text:'Request North America sales history report from Stephen Freeman',                                   owner:'Tom Watts',         due_date:null, status:'Open',       flags:[], notes:'', completed:false, sort_order:3 },
+  { id:5, text:'Complete fastener quotes for Quinnesec C5757',                                                     owner:'Tom Watts',         due_date:null, status:'Open',       flags:[{type:'urgent',text:'US suppliers may not be able to quote before order must be booked'}], notes:'', completed:false, sort_order:4 },
+  { id:6, text:'Identify global commodities manager for fasteners via Martin Zelenka; align on qualified suppliers', owner:'Tom Watts',        due_date:null, status:'On Hold',    flags:[{type:'hold',text:"Hold pending Mike V's meeting with Harald"}], notes:'', completed:false, sort_order:5 },
+  { id:7, text:'Share example Quinnesec part numbers with SAM Quality for quality process review',                  owner:'Mike M / Tom W',    due_date:null, status:'Open',       flags:[], notes:'', completed:false, sort_order:6 },
+  { id:8, text:'Schedule follow-up quality call with SAM Quality after receiving guidance from NBG',               owner:'Mike Mougeotte',    due_date:null, status:'Open',       flags:[], notes:'', completed:false, sort_order:7 },
+  { id:9, text:'Plan visit to Nuremberg to meet NBG team & capture tribal knowledge',                               owner:'Tom Watts',         due_date:null, status:'Open',       flags:[], notes:'', completed:false, sort_order:8 }
+];
+
+var _actionsCache = null;  // in-memory cache
+
+// ── Load / Save ──
+function loadActionsLocal() {
+  try {
+    var raw = localStorage.getItem(ACTIONS_KEY);
+    return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULT_ACTIONS));
+  } catch(e) { return JSON.parse(JSON.stringify(DEFAULT_ACTIONS)); }
+}
+function saveActionsLocal(data) {
+  try { localStorage.setItem(ACTIONS_KEY, JSON.stringify(data)); } catch(e) {}
+}
+async function loadActionsRemote() {
+  if (!isConfigured()) return loadActionsLocal();
+  try {
+    var res = await _sb.from('es_actions').select('*').order('sort_order', { ascending:true });
+    if (res.error || !res.data || res.data.length === 0) return loadActionsLocal();
+    var data = res.data.map(function(r) {
+      return Object.assign({}, r, {
+        flags: typeof r.flags === 'string' ? JSON.parse(r.flags||'[]') : (r.flags||[]),
+        notes: r.notes || ''
+      });
+    });
+    saveActionsLocal(data);
+    return data;
+  } catch(e) { console.warn('Actions remote load failed:', e); return loadActionsLocal(); }
+}
+async function saveActionRemote(item) {
+  if (!isConfigured() || !_isEditor) return;
+  try {
+    var row = Object.assign({}, item, {
+      flags: JSON.stringify(item.flags || [])
+    });
+    var res = await _sb.from('es_actions').upsert(row);
+    if (res.error) console.warn('Action upsert error:', res.error);
+  } catch(e) { console.warn('Action remote save failed:', e); }
+}
+async function deleteActionRemote(id) {
+  if (!isConfigured() || !_isEditor) return;
+  try { await _sb.from('es_actions').delete().eq('id', id); } catch(e) {}
+}
+
+function getActions() {
+  return _actionsCache || loadActionsLocal();
+}
+function getActionById(id) {
+  return getActions().filter(function(a){ return a.id === id; })[0] || null;
+}
+function nextActionId(data) {
+  if (!data || !data.length) return 1;
+  return Math.max.apply(null, data.map(function(a){ return a.id; })) + 1;
+}
+
+// ── RENDER ACTIONS ──
+function renderActions() {
+  var tbody    = document.getElementById('actionBody');
+  var compBody = document.querySelector('#completedTable tbody');
+  if (!tbody) return;
+  var data = getActions();
+
+  tbody.innerHTML    = '';
+  if (compBody) compBody.innerHTML = '';
+
+  var active    = data.filter(function(a){ return !a.completed; });
+  var completed = data.filter(function(a){ return  a.completed; });
+
+  active.forEach(function(item) { tbody.appendChild(buildActionRow(item, false)); });
+  if (compBody) completed.forEach(function(item) { compBody.appendChild(buildActionRow(item, true)); });
+
+  initActionsDrag();
+  initNotesIndicators();
+  setTimeout(updateActionCallout, 0);
+}
+
+function buildActionRow(item, isDone) {
+  var id       = item.id;
+  var domId    = 'a' + id;
+  var months   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var fmtDue   = item.due_date
+    ? (function(){ var p=item.due_date.split('-'); return months[parseInt(p[1])-1]+' '+parseInt(p[2])+', '+p[0]; })()
+    : '\u2014';
+  var badgeCls = item.status==='Open'?'badge-red':item.status==='In Progress'?'badge-yellow':item.status==='Done'?'badge-green':'badge-gray';
+
+  var row = document.createElement('tr');
+  row.setAttribute('data-id',     domId);
+  row.setAttribute('data-db-id',  id);
+  row.setAttribute('data-owner',  item.owner  || '');
+  row.setAttribute('data-status', item.status || 'Open');
+  row.setAttribute('data-due',    item.due_date || '');
+  if (isDone) {
+    row.classList.add('done');
+  }
+
+  // Col 0: drag handle
+  var td0 = document.createElement('td');
+  td0.style.cssText = 'padding:0 2px;cursor:grab;';
+  td0.className = 'drag-handle-cell';
+  td0.innerHTML = isDone
+    ? '<span style="color:#22c55e;font-size:16px;padding:0 6px;">&#x2713;</span>'
+    : '<span class="drag-handle" title="Drag to reorder">&#x2630;</span>';
+  row.appendChild(td0);
+
+  // Col 1: expand chevron
+  var td1 = document.createElement('td');
+  td1.style.cssText = 'text-align:center;padding:0 4px;width:36px;';
+  var expBtn = document.createElement('button');
+  expBtn.className = 'expand-btn';
+  expBtn.id = 'expbtn-' + domId;
+  expBtn.title = 'View / add notes';
+  expBtn.textContent = '\u25b6';
+  expBtn.onclick = (function(did){ return function(){ toggleNotes(did); }; })(domId);
+  td1.appendChild(expBtn);
+  row.appendChild(td1);
+
+  // Col 2: action text + flags + add-label-btn
+  var td2 = document.createElement('td');
+  td2.className = 'action-text-cell';
+  if (isDone) { td2.style.textDecoration = 'line-through'; td2.style.color = 'var(--gray-400)'; }
+  var textNode = document.createTextNode(item.text);
+  td2.appendChild(textNode);
+  // Flags
+  (item.flags || []).forEach(function(f) {
+    var ft = FLAG_TYPES.filter(function(x){ return x.key === f.type; })[0]
+          || { key:f.type, icon:'⚠', style:'font-size:11px;color:var(--red);font-weight:600;margin-top:3px;' };
+    var lbl = buildStatusLabel(ft, f.text);
+    td2.appendChild(lbl);
+  });
+  // Add label btn (editor-only)
+  var addLblBtn = document.createElement('button');
+  addLblBtn.className = 'add-label-btn editor-only';
+  addLblBtn.style.display = _isEditor ? 'inline-flex' : 'none';
+  addLblBtn.textContent = '+ Add status note';
+  addLblBtn.onclick = function(){ showLabelPicker(addLblBtn); };
+  td2.appendChild(addLblBtn);
+  row.appendChild(td2);
+
+  // Col 3: owner
+  var td3 = document.createElement('td');
+  var ownerBadge = document.createElement('span');
+  ownerBadge.className = 'badge badge-teal';
+  ownerBadge.textContent = item.owner || '\u2014';
+  td3.appendChild(ownerBadge);
+  row.appendChild(td3);
+
+  // Col 4: due date
+  var td4 = document.createElement('td');
+  td4.style.cssText = 'font-family:var(--mono);font-size:12px;color:var(--gray-500);';
+  td4.textContent = fmtDue;
+  row.appendChild(td4);
+
+  // Col 5: status
+  var td5 = document.createElement('td');
+  var statBadge = document.createElement('span');
+  statBadge.className = 'badge ' + badgeCls;
+  statBadge.textContent = item.status;
+  td5.appendChild(statBadge);
+  row.appendChild(td5);
+
+  // Col 6: actions (editor-only, empty until edit mode)
+  var td6 = document.createElement('td');
+  row.appendChild(td6);
+
+  // Store notes if present
+  if (item.notes && item.notes.trim()) {
+    var store = getNotesStore();
+    store[domId] = item.notes;
+    try { localStorage.setItem(NOTES_KEY, JSON.stringify(store)); } catch(e) {}
+  }
+
+  return row;
+}
+
+// ── SAVE HELPERS — called by existing add/edit/delete functions ──
+async function persistAction(item) {
+  var data = getActions();
+  var idx = data.findIndex(function(a){ return a.id === item.id; });
+  if (idx >= 0) { data[idx] = item; }
+  else { data.push(item); }
+  _actionsCache = data;
+  saveActionsLocal(data);
+  await saveActionRemote(item);
+  flashSaved();
+}
+
+async function removeAction(dbId) {
+  var data = getActions().filter(function(a){ return a.id !== dbId; });
+  _actionsCache = data;
+  saveActionsLocal(data);
+  await deleteActionRemote(dbId);
+  flashSaved();
+}
+
+async function persistActionOrder() {
+  var rows = document.querySelectorAll('#actionBody tr[data-db-id]');
+  var data = getActions();
+  rows.forEach(function(row, i) {
+    var dbId = parseInt(row.getAttribute('data-db-id'));
+    var item = data.filter(function(a){ return a.id === dbId; })[0];
+    if (item) item.sort_order = i;
+  });
+  _actionsCache = data;
+  saveActionsLocal(data);
+  if (isConfigured() && _isEditor) {
+    data.forEach(function(item) { saveActionRemote(item); });
+  }
+}
+
+// ── READ ACTION FROM DOM ROW (for commit) ──
+function readRowToItem(row) {
+  var dbId    = parseInt(row.getAttribute('data-db-id'));
+  var item    = getActionById(dbId) || {};
+  var textCell = row.querySelector('.action-text-cell');
+  // Get text only (first text node, not the flag divs)
+  var rawText = '';
+  if (textCell) {
+    textCell.childNodes.forEach(function(n) {
+      if (n.nodeType === 3) rawText += n.textContent;
+    });
+    rawText = rawText.trim();
+  }
+  // Collect flags from DOM
+  var flags = [];
+  if (textCell) {
+    textCell.querySelectorAll('.action-status-label').forEach(function(lbl) {
+      var icon = lbl.querySelector('.lbl-icon');
+      var txt  = lbl.querySelector('.lbl-text');
+      flags.push({
+        type: lbl.getAttribute('data-labeltype') || 'info',
+        text: txt ? txt.textContent.trim() : lbl.textContent.trim()
+      });
+    });
+  }
+  // Notes
+  var notesStore = getNotesStore();
+  var domId = 'a' + dbId;
+  var notes = notesStore[domId] || item.notes || '';
+  return Object.assign({}, item, {
+    id:        dbId,
+    text:      rawText || item.text,
+    owner:     row.getAttribute('data-owner')  || item.owner  || '',
+    due_date:  row.getAttribute('data-due')    || item.due_date || null,
+    status:    row.getAttribute('data-status') || item.status  || 'Open',
+    completed: item.completed || false,
+    sort_order:item.sort_order || 0,
+    flags:     flags,
+    notes:     notes
+  });
+}
+
+// ── ACTION NOTES ──
+var NOTES_KEY = 'es_action_notes';  // same as NOTES_STORAGE
+
+function getNotesStore() {
+  try { return JSON.parse(localStorage.getItem(NOTES_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveNote(id, text) {
+  var store = getNotesStore();
+  store[id] = text;
+  try { localStorage.setItem(NOTES_KEY, JSON.stringify(store)); } catch(e) {}
+  // Sync notes to action row in Supabase (Option B — notes on action row)
+  var row = document.querySelector('tr[data-id="' + id + '"]');
+  var dbId = row ? parseInt(row.getAttribute('data-db-id')) : null;
+  if (dbId) {
+    var item = getActionById(dbId);
+    if (item) { item.notes = text; persistAction(item); }
+  } else {
+    saveNoteRemote(id, text); // fallback to separate notes table
+  }
+}
+function getNote(id) { return getNotesStore()[id] || ''; }
+
+function toggleNotes(id) {
+  var existingRow = document.getElementById('notes-row-' + id);
+  var btn = document.getElementById('expbtn-' + id);
+  if (existingRow) {
+    var ta = existingRow.querySelector('textarea');
+    if (ta) { saveNote(id, ta.value); updateNotesIndicator(id, ta.value); }
+    existingRow.remove();
+    if (btn) btn.classList.remove('open');
+    return;
+  }
+  var srcRow = document.querySelector('tr[data-id="' + id + '"]');
+  if (!srcRow) return;
+  var colCount = srcRow.querySelectorAll('td').length;
+  var saved = getNote(id);
+  var noteRow = document.createElement('tr');
+  noteRow.id = 'notes-row-' + id;
+  noteRow.className = 'action-notes-row';
+  var td = document.createElement('td');
+  td.colSpan = colCount;
+  // Build panel contents with DOM (avoids all escaping issues)
+  var panel = document.createElement('div');
+  panel.className = 'action-notes-panel';
+  var toolbar = document.createElement('div');
+  toolbar.className = 'notes-toolbar';
+  var lbl = document.createElement('span');
+  lbl.className = 'notes-label';
+  lbl.textContent = '\uD83D\uDCDD Notes & Updates';
+  var stampBtn = document.createElement('button');
+  stampBtn.textContent = '+ Timestamp';
+  stampBtn.style.cssText = 'font-size:11px;padding:2px 10px;border-radius:12px;border:1px solid var(--teal-mid);background:var(--teal-pale);color:var(--teal);cursor:pointer;font-family:var(--font);font-weight:600;';
+  stampBtn.onclick = function() { prependTimestamp(id); };
+  var hint = document.createElement('span');
+  hint.style.cssText = 'font-size:11px;color:var(--gray-400);';
+  hint.textContent = 'Auto-saved on close';
+  toolbar.appendChild(lbl);
+  toolbar.appendChild(stampBtn);
+  toolbar.appendChild(hint);
+  var ta = document.createElement('textarea');
+  ta.id = 'notes-ta-' + id;
+  ta.placeholder = "Type notes here \u2014 click + Timestamp to prepend today's date...";
+  ta.value = saved;
+  panel.appendChild(toolbar);
+  panel.appendChild(ta);
+  td.appendChild(panel);
+  noteRow.appendChild(td);
+  srcRow.after(noteRow);
+  if (btn) btn.classList.add('open');
+  ta.focus();
+  ta.setSelectionRange(0, 0);
+  updateNotesIndicator(id, saved);
+}
+
+function prependTimestamp(id) {
+  var ta = document.getElementById('notes-ta-' + id);
+  if (!ta) return;
+  var now = new Date();
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var stamp = months[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear() + ' \u2014 ';
+  ta.value = stamp + '\n' + ta.value;
+  ta.focus();
+  ta.setSelectionRange(stamp.length, stamp.length);
+}
+
+function updateNotesIndicator(id, text) {
+  var srcRow = document.querySelector('tr[data-id="' + id + '"]');
+  if (!srcRow) return;
+  srcRow.classList.toggle('has-notes', !!(text && text.trim()));
+}
+
+function saveAllOpenNotes() {
+  document.querySelectorAll('.action-notes-row').forEach(function(noteRow) {
+    var id = noteRow.id.replace('notes-row-', '');
+    var ta = noteRow.querySelector('textarea');
+    if (ta) { saveNote(id, ta.value); updateNotesIndicator(id, ta.value); }
+  });
+}
+
+function initNotesIndicators() {
+  var store = getNotesStore();
+  Object.keys(store).forEach(function(id) {
+    if (store[id] && store[id].trim()) updateNotesIndicator(id, store[id]);
+  });
+}
+
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) saveAllOpenNotes();
+});
+
+// ── ACTION ITEMS ──
+function cancelEditMode() {
+  if (!editMode) return;
+  // Restore all rows from snapshots
+  document.querySelectorAll('#actionBody tr[data-id]').forEach(function(row) {
+    var snapText   = row.getAttribute('data-snap-text');
+    var snapOwner  = row.getAttribute('data-snap-owner');
+    var snapDue    = row.getAttribute('data-snap-due');
+    var snapStatus = row.getAttribute('data-snap-status');
+    var textCell   = row.querySelector('.action-text-cell');
+    var ownerCell  = row.querySelector('td:nth-child(4)');
+    var dueCell    = row.querySelector('td:nth-child(5)');
+    var statCell   = row.querySelector('td:nth-child(6)');
+    var actCell    = row.querySelector('td:last-child');
+    if (textCell && snapText !== null) {
+      textCell.contentEditable = 'false';
+      textCell.style.outline = ''; textCell.style.padding = '';
+      // Restore text only (preserve status label children)
+      var labels = Array.from(textCell.querySelectorAll('.action-status-label, .add-label-btn'));
+      textCell.childNodes.forEach(function(n) { if (n.nodeType === 3) n.textContent = ''; });
+      // Set first text node
+      var tn = document.createTextNode(snapText);
+      textCell.insertBefore(tn, textCell.firstChild);
+    }
+    row.setAttribute('data-owner', snapOwner || '');
+    row.setAttribute('data-due',   snapDue   || '');
+    row.setAttribute('data-status',snapStatus || 'Open');
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var fmtDue = snapDue ? (function(){ var p=snapDue.split('-'); return months[parseInt(p[1])-1]+' '+parseInt(p[2])+', '+p[0]; })() : '—';
+    var badgeCls = snapStatus==='Open'?'badge-red':snapStatus==='In Progress'?'badge-yellow':snapStatus==='Done'?'badge-green':'badge-gray';
+    if (ownerCell) ownerCell.innerHTML = '<span class="badge badge-teal">' + (snapOwner || '—') + '</span>';
+    if (dueCell) { dueCell.innerHTML = ''; dueCell.style.cssText = 'font-family:var(--mono);font-size:12px;color:var(--gray-500);'; dueCell.textContent = fmtDue; }
+    if (statCell) statCell.innerHTML = '<span class="badge ' + badgeCls + '">' + snapStatus + '</span>';
+    if (actCell) actCell.innerHTML = '';
+  });
+  // Restore status labels
+  document.querySelectorAll('#actionBody .action-status-label').forEach(function(lbl) {
+    lbl.contentEditable = 'false'; lbl.style.outline = '';
+    var textSpan = lbl.querySelector('.lbl-text');
+    if (textSpan) textSpan.contentEditable = 'false';
+    var tb = lbl.nextElementSibling;
+    if (tb && (tb.classList.contains('lbl-type-btn') || tb.classList.contains('label-type-picker'))) tb.remove();
+  });
+  document.querySelectorAll('#actionBody .add-label-btn').forEach(function(b){ b.style.display='none'; });
+  // Turn off edit mode
+  editMode = false;
+  var btn = document.getElementById('editModeBtn');
+  if (btn) { btn.classList.remove('active'); btn.textContent = '\u270e Edit Mode'; }
+  var cancelBtn = document.getElementById('cancelEditBtn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  var ab = document.getElementById('actionBody');
+  if (ab && ab.closest('table')) ab.closest('table').classList.remove('edit-mode-active');
+  updateActionCallout();
+}
+
+var editMode = false;
+function toggleEditMode() {
+  editMode = !editMode;
+  var btn = document.getElementById('editModeBtn');
+  btn.classList.toggle('active', editMode);
+  btn.textContent = editMode ? '\u2713 Done Editing' : '\u270e Edit Mode';
+  var cancelBtn = document.getElementById('cancelEditBtn');
+  if (cancelBtn) cancelBtn.style.display = editMode ? 'inline-flex' : 'none';
+  var ab = document.getElementById('actionBody');
+  if (ab) ab.closest('table') && ab.closest('table').classList.toggle('edit-mode-active', editMode);
+  // Show/hide add-label buttons and toggle contenteditable on status labels
+  document.querySelectorAll('#actionBody .add-label-btn').forEach(function(b) {
+    b.style.display = editMode ? 'inline-flex' : 'none';
+  });
+  document.querySelectorAll('#actionBody .action-status-label').forEach(function(lbl) {
+    var textSpan = lbl.querySelector('.lbl-text');
+    if (textSpan) {
+      textSpan.contentEditable = editMode ? 'true' : 'false';
+      lbl.style.outline = editMode ? '1px dashed var(--amber)' : '';
+    } else {
+      // Legacy label without span structure — fall back to whole-div editable
+      lbl.contentEditable = editMode ? 'true' : 'false';
+      lbl.style.outline = editMode ? '1px dashed var(--amber)' : '';
+    }
+    // Add/remove change-type button
+    var existing = lbl.parentNode.querySelector('.lbl-type-btn[data-for="' + lbl.getAttribute('data-labeltype') + '"]');
+    if (editMode && !lbl.nextElementSibling?.classList.contains('lbl-type-btn')) {
+      var tb = document.createElement('button');
+      tb.className = 'lbl-type-btn';
+      tb.setAttribute('data-for', lbl.getAttribute('data-labeltype') || '');
+      tb.style.cssText = 'font-size:10px;padding:0 5px;border-radius:8px;border:1px solid var(--gray-200);background:white;cursor:pointer;margin-left:4px;vertical-align:middle;color:var(--gray-500);';
+      tb.title = 'Change label type';
+      tb.textContent = '⟳ type';
+      tb.onclick = function(e) { e.stopPropagation(); changeLabelType(lbl); };
+      lbl.insertAdjacentElement('afterend', tb);
+    } else if (!editMode) {
+      var tb2 = lbl.nextElementSibling;
+      if (tb2 && (tb2.classList.contains('lbl-type-btn') || tb2.classList.contains('label-type-picker'))) tb2.remove();
+    }
+  });
+  document.querySelectorAll('#actionBody tr[data-id]').forEach(function(row) {
+    var textCell  = row.querySelector('.action-text-cell');
+    var ownerCell = row.querySelector('td:nth-child(4)');
+    var dueCell   = row.querySelector('td:nth-child(5)');
+    var statCell  = row.querySelector('td:nth-child(6)');
+    var actCell   = row.querySelector('td:last-child');
+    if (editMode) {
+      // Snapshot current state for cancel
+      row.setAttribute('data-snap-text',  textCell ? textCell.innerText.trim() : '');
+      row.setAttribute('data-snap-owner', row.getAttribute('data-owner') || '');
+      row.setAttribute('data-snap-due',   row.getAttribute('data-due')   || '');
+      row.setAttribute('data-snap-status',row.getAttribute('data-status')|| 'Open');
+      // Make text cell directly editable
+      if (textCell) { textCell.contentEditable = 'true'; textCell.style.cssText += ';outline:1px dashed var(--teal-light);border-radius:4px;padding:4px 6px;min-width:80px;'; }
+      // Owner: inline input
+      var ownerBadge = ownerCell ? ownerCell.querySelector('.badge') : null;
+      var ownerVal   = ownerBadge ? ownerBadge.textContent.trim() : '';
+      if (ownerCell) ownerCell.innerHTML = '<input class="inline-edit-input" value="' + ownerVal.replace(/"/g,'&quot;') + '" style="width:120px;" onchange="row.setAttribute(\'data-owner\',this.value)">';
+      // Due: inline date
+      var dueVal = row.getAttribute('data-due') || '';
+      if (dueCell) dueCell.innerHTML = '<input type="date" class="inline-edit-input" value="' + dueVal + '" style="width:130px;" onchange="row.setAttribute(\'data-due\',this.value)">';
+      // Status: inline select
+      var curSt = row.getAttribute('data-status') || 'Open';
+      if (statCell) statCell.innerHTML = '<select class="inline-edit-input" onchange="handleStatusChange(this,row)"><option' + (curSt==='Open'?' selected':'') + '>Open</option><option' + (curSt==='In Progress'?' selected':'') + '>In Progress</option><option' + (curSt==='On Hold'?' selected':'') + '>On Hold</option><option' + (curSt==='Done'?' selected':'') + '>Done</option></select>';
+      // Delete button only
+      if (actCell) actCell.innerHTML = '<button class="icon-btn icon-btn-del" title="Delete" onclick="deleteActionRow(this.closest(\'tr\'))">\u2715</button>';
+    } else {
+      // Commit changes and restore display
+      commitInlineEdits(row);
+    }
+  });
+}
+
+function commitInlineEdits(row) {
+  var textCell  = row.querySelector('.action-text-cell');
+  var ownerCell = row.querySelector('td:nth-child(4)');
+  var dueCell   = row.querySelector('td:nth-child(5)');
+  var statCell  = row.querySelector('td:nth-child(6)');
+  var actCell   = row.querySelector('td:last-child');
+  // Text
+  if (textCell) { textCell.contentEditable = 'false'; textCell.style.outline = ''; textCell.style.padding = ''; }
+  // Owner
+  var ownerInput = ownerCell ? ownerCell.querySelector('input') : null;
+  var ownerVal = ownerInput ? ownerInput.value.trim() : (row.getAttribute('data-owner') || '—');
+  if (ownerCell) { ownerCell.innerHTML = '<span class="badge badge-teal">' + ownerVal + '</span>'; row.setAttribute('data-owner', ownerVal); }
+  // Due
+  var dueInput = dueCell ? dueCell.querySelector('input') : null;
+  var dueVal = dueInput ? dueInput.value : (row.getAttribute('data-due') || '');
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var fmtDue = dueVal ? (function(){ var p=dueVal.split('-'); return months[parseInt(p[1])-1]+' '+parseInt(p[2])+', '+p[0]; })() : '—';
+  if (dueCell) { dueCell.textContent = fmtDue; dueCell.style.cssText = 'font-family:var(--mono);font-size:12px;color:var(--gray-500);'; row.setAttribute('data-due', dueVal); }
+  // Status
+  var statSel = statCell ? statCell.querySelector('select') : null;
+  var statVal = statSel ? statSel.value : (row.getAttribute('data-status') || 'Open');
+  var badgeCls = statVal === 'Open' ? 'badge-red' : statVal === 'In Progress' ? 'badge-yellow' : statVal === 'Done' ? 'badge-green' : 'badge-gray';
+  if (statCell) { statCell.innerHTML = '<span class="badge ' + badgeCls + '">' + statVal + '</span>'; row.setAttribute('data-status', statVal); }
+  if (actCell) actCell.innerHTML = '';
+  // Auto-move to completed if Done
+  if (statVal === 'Done') moveRowToCompleted(row);
+  updateActionCallout();
+}
+
+function handleStatusChange(sel, row) {
+  row.setAttribute('data-status', sel.value);
+}
+
+function moveRowToCompleted(row) {
+  var tbody = document.querySelector('#completedList tbody');
+  if (!tbody) {
+    // Create tbody if completedList table doesn't have one
+    var tbl = document.querySelector('#completedList table');
+    if (!tbl) return;
+    tbody = tbl.querySelector('tbody');
+    if (!tbody) { tbody = document.createElement('tbody'); tbl.appendChild(tbody); }
+  }
+  var textCell = row.querySelector('.action-text-cell');
+  var text = textCell ? textCell.textContent.trim() : '';
+  var owner = row.getAttribute('data-owner') || '—';
+  var due = row.getAttribute('data-due') || '';
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var fmtDue = due ? (function(){ var p=due.split('-'); return months[parseInt(p[1])-1]+' '+parseInt(p[2])+', '+p[0]; })() : '—';
+  var doneRow = document.createElement('tr');
+  doneRow.className = 'done';
+  doneRow.innerHTML =
+    '<td style="text-align:center;color:#22c55e;font-size:16px;">\u2713</td>' +
+    '<td class="action-text-cell" style="text-decoration:line-through;color:var(--gray-400);">' + text + '</td>' +
+    '<td><span class="badge badge-gray">' + owner + '</span></td>' +
+    '<td style="font-family:var(--mono);font-size:12px;color:var(--gray-400);">' + fmtDue + '</td>' +
+    '<td><span class="badge badge-green">Done</span></td>' +
+    '<td></td>';
+  tbody.appendChild(doneRow);
+  // Update completed count
+  var count = tbody.querySelectorAll('tr').length;
+  var toggle = document.querySelector('.completed-toggle');
+  if (toggle) toggle.textContent = (toggle.textContent.indexOf('\u25bc') >= 0 ? '\u25bc' : '\u25b6') + ' Completed Items (' + count + ')';
+  row.remove();
+  updateActionCallout();
+}
+
+function getFlagClass(type) {
+  return { warning:'warning', hold:'hold', info:'info', urgent:'urgent' }[type] || '';
+}
+function getFlagIcon(type) {
+  return { warning:'\u26a0', hold:'\u23f8', info:'\u2139', urgent:'\uD83D\uDD34' }[type] || '';
+}
+
+function renderFlag(type, text) {
+  if (!type || !text) return '';
+  return '<div class="action-flag ' + getFlagClass(type) + '">' + getFlagIcon(type) + ' ' + text + '</div>';
+}
+
+function toggleSavingsInfo() {
+  var p = document.getElementById('savingsInfoPanel');
+  if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
+function deleteActionRow(row) {
+  if (!confirm('Delete this action item?')) return;
+  var dbId = parseInt(row.getAttribute('data-db-id'));
+  row.remove();
+  // Close notes row if open
+  var notesRow = document.getElementById('notes-row-' + row.getAttribute('data-id'));
+  if (notesRow) notesRow.remove();
+  if (dbId) removeAction(dbId);
+  else updateActionCallout();
+}
+
+function openActionEdit(row) {
+  var textCell  = row.querySelector('.action-text-cell');
+  var ownerBadge = row.querySelector('td:nth-child(4) .badge');
+  var statBadge  = row.querySelector('td:nth-child(6) .badge');
+  var textClone = textCell ? textCell.cloneNode(true) : null;
+  if (textClone) { textClone.querySelectorAll('div').forEach(function(d){ d.remove(); }); }
+  document.getElementById('editActionText').value  = textClone ? textClone.textContent.trim() : '';
+  document.getElementById('editOwner').value       = ownerBadge ? ownerBadge.textContent.trim() : '';
+  document.getElementById('editDue').value         = row.getAttribute('data-due') || '';
+  document.getElementById('editStatus').value      = row.getAttribute('data-status') || 'Open';
+  document.getElementById('editFlagType').value    = row.getAttribute('data-flag-type') || '';
+  document.getElementById('editFlagText').value    = row.getAttribute('data-flag-text') || '';
+  window._editingActionRow = row;
+  document.getElementById('actionEditModalBackdrop').style.display = 'block';
+  document.getElementById('actionEditModal').style.display = 'block';
+  document.getElementById('editActionText').focus();
+}
+
+function saveActionEdit() {
+  var text   = document.getElementById('editActionText').value.trim();
+  var owner  = document.getElementById('editOwner').value.trim();
+  var due    = document.getElementById('editDue').value;
+  var status = document.getElementById('editStatus').value;
+  var flagType = document.getElementById('editFlagType').value;
+  var flagText = document.getElementById('editFlagText').value.trim();
+  if (!text) { alert('Action text is required.'); return; }
+  var row = window._editingActionRow;
+  if (!row) return;
+  var badgeCls = status === 'Open' ? 'badge-red' : status === 'In Progress' ? 'badge-yellow' : status === 'Done' ? 'badge-green' : 'badge-gray';
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var fmtDue = due ? (function(){ var p=due.split('-'); return months[parseInt(p[1])-1]+' '+parseInt(p[2])+', '+p[0]; })() : '\u2014';
+  var textCell = row.querySelector('.action-text-cell');
+  // Remove any existing flag div then set text + flag
+  if (textCell) {
+    textCell.innerHTML = text + (flagType && flagText ? renderFlag(flagType, flagText) : '');
+    row.setAttribute('data-flag-type', flagType);
+    row.setAttribute('data-flag-text', flagText);
+  }
+  var ob = row.querySelector('td:nth-child(4) .badge');
+  if (ob) ob.textContent = owner || '\u2014';
+  var dueCell = row.querySelector('td:nth-child(4)');
+  if (dueCell) dueCell.textContent = fmtDue;
+  var sb = row.querySelector('td:nth-child(5) .badge');
+  if (sb) { sb.textContent = status; sb.className = 'badge ' + badgeCls; }
+  row.setAttribute('data-owner', owner);
+  row.setAttribute('data-status', status);
+  row.setAttribute('data-due', due);
+  closeActionEdit();
+  if (status === 'Done') moveRowToCompleted(row);
+  else updateActionCallout();
+}
+
+function closeActionEdit() {
+  document.getElementById('actionEditModalBackdrop').style.display = 'none';
+  document.getElementById('actionEditModal').style.display = 'none';
+  window._editingActionRow = null;
+}
+function toggleAddForm() {
+  document.getElementById('addForm').classList.toggle('visible');
+}
+function addAction() {
+  var text   = document.getElementById('newActionText').value.trim();
+  var owner  = document.getElementById('newOwner').value.trim();
+  var due    = document.getElementById('newDue').value;
+  var status = document.getElementById('newStatus').value;
+  if (!text) return;
+
+  var flagTypeVal = document.getElementById('newFlagType') ? document.getElementById('newFlagType').value : '';
+  var flagTextVal = document.getElementById('newFlagText') ? document.getElementById('newFlagText').value.trim() : '';
+  var keyMap = { 'warning':'urgent', 'urgent':'urgent', 'hold':'hold', 'info':'info', 'risk':'risk' };
+  var flags = (flagTypeVal && flagTextVal) ? [{ type: keyMap[flagTypeVal]||flagTypeVal, text: flagTextVal }] : [];
+
+  var data = getActions();
+  var newDbId = nextActionId(data);
+  var item = {
+    id: newDbId, text: text, owner: owner||'\u2014',
+    due_date: due||null, status: status, flags: flags,
+    notes: '', completed: false,
+    sort_order: data.filter(function(a){return !a.completed;}).length
+  };
+  _actionsCache = data.concat([item]);
+  saveActionsLocal(_actionsCache);
+  saveActionRemote(item);
+
+  var row = buildActionRow(item, false);
+  document.getElementById('actionBody').appendChild(row);
+  if (editMode) {
+    row.setAttribute('data-snap-text',   text);
+    row.setAttribute('data-snap-owner',  owner||'\u2014');
+    row.setAttribute('data-snap-due',    due||'');
+    row.setAttribute('data-snap-status', status);
+    setInlineEditOn(row);
+  }
+  if (_isEditor) {
+    var lbl = row.querySelector('.add-label-btn');
+    if (lbl) lbl.style.display = 'inline-flex';
+  }
+
+  document.getElementById('newActionText').value = '';
+  document.getElementById('newOwner').value = '';
+  document.getElementById('newDue').value = '';
+  if (document.getElementById('newFlagType')) document.getElementById('newFlagType').value = '';
+  if (document.getElementById('newFlagText')) document.getElementById('newFlagText').value = '';
+  updateActionCallout();
+  toggleAddForm();
+}
+
+// Extracted helper: put a single row into inline edit state
+// (used both by toggleEditMode and addAction above)
+function setInlineEditOn(row) {
+  var textCell  = row.querySelector('.action-text-cell');
+  var ownerCell = row.querySelector('td:nth-child(4)');
+  var dueCell   = row.querySelector('td:nth-child(5)');
+  var statCell  = row.querySelector('td:nth-child(6)');
+  var actCell   = row.querySelector('td:last-child');
+  if (textCell) {
+    textCell.contentEditable = 'true';
+    textCell.style.cssText += ';outline:1px dashed var(--teal-light);border-radius:4px;padding:4px 6px;min-width:80px;';
+  }
+  var ownerBadge = ownerCell ? ownerCell.querySelector('.badge') : null;
+  var ownerVal   = ownerBadge ? ownerBadge.textContent.trim() : (row.getAttribute('data-owner') || '');
+  if (ownerCell) ownerCell.innerHTML = '<input class="inline-edit-input" value="' + ownerVal.replace(/"/g,'&quot;') + '" style="width:120px;" onchange="this.closest(\'tr\').setAttribute(\'data-owner\',this.value)">';
+  var dueVal = row.getAttribute('data-due') || '';
+  if (dueCell) dueCell.innerHTML = '<input type="date" class="inline-edit-input" value="' + dueVal + '" style="width:130px;" onchange="this.closest(\'tr\').setAttribute(\'data-due\',this.value)">';
+  var curSt = row.getAttribute('data-status') || 'Open';
+  if (statCell) statCell.innerHTML = '<select class="inline-edit-input" onchange="handleStatusChange(this,this.closest(\'tr\'))">'
+    + ['Open','In Progress','On Hold','Done'].map(function(o){ return '<option' + (curSt===o?' selected':'') + '>' + o + '</option>'; }).join('')
+    + '</select>';
+  if (actCell) actCell.innerHTML = '<button class="icon-btn icon-btn-del" title="Delete" onclick="deleteActionRow(this.closest(\'tr\'))">&#x2715;</button>';
+}
+function filterActions(owner) {
+  document.querySelectorAll('#actionBody tr').forEach(function(row) {
+    row.style.display = (owner === 'all' || row.getAttribute('data-owner') === owner) ? '' : 'none';
+  });
+}
+function filterByStatus(status) {
+  document.querySelectorAll('#actionBody tr').forEach(function(row) {
+    row.style.display = (status === 'all' || row.getAttribute('data-status') === status) ? '' : 'none';
+  });
+}
+
+function moveToDone(row) {
+  row.classList.add('done');
+  var textCell = row.querySelector('.action-text-cell');
+  if (textCell) { textCell.style.textDecoration = 'line-through'; textCell.style.color = 'var(--gray-400)'; }
+  // Persist completed=true
+  var dbId = parseInt(row.getAttribute('data-db-id'));
+  if (dbId) {
+    var item = getActionById(dbId);
+    if (item) { item.completed = true; item.status = 'Done'; persistAction(item); }
+  }
+  // Move to completed tbody
+  var completedBody = document.querySelector('#completedList tbody');
+  if (!completedBody) {
+    // Create completed table if needed
+    var wrap = document.getElementById('completedList');
+    var tbl = document.createElement('table'); tbl.className = 'action-table';
+    var tb = document.createElement('tbody'); tbl.appendChild(tb);
+    wrap.querySelector('.card') ? wrap.querySelector('.card').appendChild(tbl) : wrap.appendChild(tbl);
+    completedBody = tb;
+  }
+  // Replace expand chevron with ✓
+  var firstCell = row.querySelector('td:first-child');
+  if (firstCell) firstCell.innerHTML = '<span style="color:#22c55e;font-size:16px;">✓</span>';
+  completedBody.appendChild(row);
+  // Update completed count
+  updateCompletedCount();
+  updateActionCallout();
+}
+
+function updateCompletedCount() {
+  var count = document.querySelectorAll('#completedList tbody tr, #completedList tr.done').length;
+  var toggle = document.querySelector('.completed-toggle');
+  if (toggle) toggle.textContent = (toggle.classList.contains('open') ? '▼' : '▶') + ' Completed Items (' + count + ')';
+}
+
+// Flag type picker shown inline above the add-label button
+var FLAG_TYPES = [
+  { key:'urgent', icon:'⚠', label:'Urgent', style:'font-size:11px;color:var(--red);font-weight:600;margin-top:3px;' },
+  { key:'hold',   icon:'⏸', label:'Hold',   style:'font-size:11px;color:var(--gray-400);font-style:italic;margin-top:3px;' },
+  { key:'info',   icon:'ℹ', label:'Info',   style:'font-size:11px;color:var(--indigo);font-weight:500;margin-top:3px;' },
+  { key:'risk',   icon:'🔴', label:'Risk',  style:'font-size:11px;color:#c0392b;font-weight:600;margin-top:3px;' }
+];
+
+function showLabelPicker(btn) {
+  // Remove any existing picker
+  var existing = btn.parentNode.querySelector('.label-picker');
+  if (existing) { existing.remove(); return; }
+  var picker = document.createElement('div');
+  picker.className = 'label-picker';
+  picker.style.cssText = 'display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;margin-bottom:4px;align-items:center;';
+  FLAG_TYPES.forEach(function(ft) {
+    var b = document.createElement('button');
+    b.style.cssText = 'font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid var(--gray-200);background:white;cursor:pointer;font-family:var(--font);';
+    b.textContent = ft.icon + ' ' + ft.label;
+    b.title = 'Add ' + ft.label + ' label';
+    b.onclick = function(e) {
+      e.stopPropagation();
+      insertStatusLabel(btn, ft);
+      picker.remove();
+    };
+    picker.appendChild(b);
+  });
+  var cancelB = document.createElement('button');
+  cancelB.style.cssText = 'font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid var(--gray-200);background:var(--gray-100);cursor:pointer;font-family:var(--font);color:var(--gray-500);';
+  cancelB.textContent = '✕';
+  cancelB.onclick = function() { picker.remove(); };
+  picker.appendChild(cancelB);
+  btn.after(picker);
+}
+
+// Build a status label element (used by insertStatusLabel and addAction)
+function buildStatusLabel(ft, initialText) {
+  var lbl = document.createElement('div');
+  lbl.className = 'action-status-label';
+  lbl.setAttribute('data-labeltype', ft.key);
+  lbl.style.cssText = ft.style;
+  // Non-editable icon prefix
+  var iconSpan = document.createElement('span');
+  iconSpan.className = 'lbl-icon';
+  iconSpan.contentEditable = 'false';
+  iconSpan.style.cssText = 'user-select:none;margin-right:3px;';
+  iconSpan.textContent = ft.icon;
+  // Editable text portion
+  var textSpan = document.createElement('span');
+  textSpan.className = 'lbl-text';
+  textSpan.contentEditable = 'false'; // flipped to true in edit mode
+  textSpan.textContent = initialText || '';
+  lbl.appendChild(iconSpan);
+  lbl.appendChild(textSpan);
+  return lbl;
+}
+
+function insertStatusLabel(btn, ft) {
+  var lbl = buildStatusLabel(ft, 'Type note here\u2026');
+  // Make editable now since we're in edit mode when this is called
+  lbl.style.cssText += 'outline:1px dashed var(--amber);';
+  lbl.querySelector('.lbl-text').contentEditable = 'true';
+  btn.before(lbl);
+  // Focus and select all text in the text span for instant replacement
+  var textSpan = lbl.querySelector('.lbl-text');
+  textSpan.focus();
+  var range = document.createRange();
+  range.selectNodeContents(textSpan);
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+// Change flag type on an existing label — called via a small type-change button
+function changeLabelType(lbl) {
+  var existing = lbl.nextSibling && lbl.nextSibling.classList && lbl.nextSibling.classList.contains('label-type-picker');
+  if (existing) { lbl.nextSibling.remove(); return; }
+  var picker = document.createElement('span');
+  picker.className = 'label-type-picker';
+  picker.style.cssText = 'display:inline-flex;gap:4px;margin-left:6px;';
+  FLAG_TYPES.forEach(function(ft) {
+    var b = document.createElement('button');
+    b.style.cssText = 'font-size:11px;padding:1px 6px;border-radius:8px;border:1px solid var(--gray-200);background:white;cursor:pointer;';
+    b.textContent = ft.icon;
+    b.title = ft.label;
+    b.onclick = function(e) {
+      e.stopPropagation();
+      lbl.style.cssText = ft.style + 'outline:1px dashed var(--amber);';
+      lbl.setAttribute('data-labeltype', ft.key);
+      // Update icon span
+      var iconSpan = lbl.querySelector('.lbl-icon');
+      if (iconSpan) { iconSpan.textContent = ft.icon; }
+      else { lbl.textContent = ft.icon + ' ' + lbl.textContent.replace(/^[\s\S]+? /, ''); }
+      picker.remove();
+    };
+    picker.appendChild(b);
+  });
+  lbl.insertAdjacentElement('afterend', picker);
+}
+
+function addStatusLabel(btn) {
+  showLabelPicker(btn);
+}
+function toggleCompleted() {
+  var list = document.getElementById('completedList');
+  var toggle = document.querySelector('.completed-toggle');
+  var hidden = list.style.display === 'none';
+  list.style.display = hidden ? 'block' : 'none';
+  toggle.textContent = (hidden ? '\u25bc' : '\u25b6') + ' Completed Items (2)';
+}
+
+
+// ══════════════════════════════════════════════
+// COMMODITY DATA — FY2025 NBG Intercompany Spend
+// Source: Euro Steam Purchase History Report FY25
+// joined to SDE USA Spares List on material number
+// Scope: SDE spare parts only ($1,915k of $11,784k total)
+// Tariff scaled to match OTD report total exactly: $467,721
+// Landed = spend $1,915k + tariff $468k = $2,383k (matches OTD: $2,382,726.79)
+// priceRed: Fasteners −59%, Bearings −73%, Valves −67%,
+//           all others −10% (conservative estimate)
+// All dollar values in USD thousands (rounded)
+// ══════════════════════════════════════════════
+var ALL_COMMODITIES = [
+  // FY2025 NBG SDE spare parts — verified against OTD/Tariff Report
+  // Spend + Duty match OTD totals exactly: $1,915,006 + $467,721 = $2,382,727 landed
+  // Saving = (Spend + Duty) - USCost  [landed cost avoided by switching to US supplier]
+  // Price reductions: Bearings -73%, Fasteners -59%, Valve Parts -67%, all others -10%
+  // All dollar values in USD thousands (rounded)
+  { key:'Bearings',                      label:'Bearings',               totalCost:422, tariffAmt:84,  usCost:114, saving:392, tariffRate:25, priceRed:73, adjSave:77, status:'other',    usLocal:27 },
+  { key:'Fasteners',                     label:'Fasteners',              totalCost:321, tariffAmt:145, usCost:132, saving:335, tariffRate:50, priceRed:59, adjSave:72, status:'in-scope', usLocal:41 },
+  { key:'Valve Parts',                   label:'Valve Parts',            totalCost:262, tariffAmt:46,  usCost:86,  saving:222, tariffRate:25, priceRed:67, adjSave:72, status:'other',    usLocal:33 },
+  { key:'Gland Bushings',               label:'Gland Bushings',         totalCost:165, tariffAmt:21,  usCost:149, saving:37,  tariffRate:25, priceRed:10, adjSave:20, status:'other',    usLocal:90 },
+  { key:'Guides & Bushings',            label:'Guides & Bushings',      totalCost:153, tariffAmt:49,  usCost:138, saving:65,  tariffRate:25, priceRed:10, adjSave:32, status:'other',    usLocal:90 },
+  { key:'Rings',                         label:'Rings',                  totalCost:105, tariffAmt:26,  usCost:95,  saving:37,  tariffRate:50, priceRed:10, adjSave:28, status:'pipeline', usLocal:90 },
+  { key:'Oil Sealing Ring',              label:'Oil Sealing Ring',       totalCost:82,  tariffAmt:20,  usCost:74,  saving:28,  tariffRate:50, priceRed:10, adjSave:27, status:'other',    usLocal:90 },
+  { key:'BBC Legacy Segments (steam seals)', label:'Steam Seals', totalCost:76, tariffAmt:0,  usCost:69,  saving:8,   tariffRate:25, priceRed:10, adjSave:10, status:'other',    usLocal:90 },
+  { key:'Instruments',                   label:'Instruments',            totalCost:64,  tariffAmt:8,   usCost:58,  saving:14,  tariffRate:10, priceRed:10, adjSave:20, status:'other',    usLocal:90 },
+  { key:'Gaskets',                       label:'Gaskets',                totalCost:45,  tariffAmt:3,   usCost:40,  saving:8,   tariffRate:10, priceRed:10, adjSave:16, status:'other',    usLocal:90 },
+  { key:'Springs',                       label:'Springs',                totalCost:37,  tariffAmt:20,  usCost:33,  saving:23,  tariffRate:50, priceRed:10, adjSave:42, status:'in-scope', usLocal:90 },
+  { key:'Oil Unit & Steam Unit (Aux.)', label:'Oil Unit & Steam Aux.',  totalCost:34,  tariffAmt:4,   usCost:30,  saving:8,   tariffRate:25, priceRed:10, adjSave:20, status:'other',    usLocal:90 },
+  { key:'Minor Parts',                   label:'Minor Parts',            totalCost:29,  tariffAmt:5,   usCost:26,  saving:8,   tariffRate:25, priceRed:10, adjSave:23, status:'other',    usLocal:90 },
+  { key:'HP Steam Inlet Pipes',          label:'HP Steam Inlet Pipes',   totalCost:28,  tariffAmt:14,  usCost:25,  saving:17,  tariffRate:25, priceRed:10, adjSave:40, status:'other',    usLocal:90 },
+  { key:'Oil Sealing Rings',             label:'Oil Sealing Rings',      totalCost:18,  tariffAmt:2,   usCost:16,  saving:4,   tariffRate:50, priceRed:10, adjSave:21, status:'other',    usLocal:90 },
+  { key:'Couplings',                     label:'Couplings',              totalCost:14,  tariffAmt:2,   usCost:12,  saving:3,   tariffRate:25, priceRed:10, adjSave:22, status:'other',    usLocal:90 },
+  { key:'Plates / Sheets',              label:'Plates / Sheets',        totalCost:14,  tariffAmt:4,   usCost:12,  saving:5,   tariffRate:25, priceRed:10, adjSave:29, status:'other',    usLocal:90 },
+  { key:'Sealing Strips',               label:'Sealing Strips',         totalCost:13,  tariffAmt:4,   usCost:12,  saving:5,   tariffRate:50, priceRed:10, adjSave:30, status:'other',    usLocal:90 },
+  { key:'Rods',                          label:'Rods',                   totalCost:9,   tariffAmt:3,   usCost:9,   saving:4,   tariffRate:25, priceRed:10, adjSave:33, status:'other',    usLocal:90 },
+  { key:'Calottes',                      label:'Calottes',               totalCost:7,   tariffAmt:4,   usCost:7,   saving:5,   tariffRate:25, priceRed:10, adjSave:41, status:'other',    usLocal:90 },
+  { key:'Piston',                        label:'Piston',                 totalCost:6,   tariffAmt:1,   usCost:6,   saving:2,   tariffRate:25, priceRed:10, adjSave:24, status:'other',    usLocal:90 },
+  { key:'Flanges',                       label:'Flanges',                totalCost:6,   tariffAmt:1,   usCost:5,   saving:2,   tariffRate:25, priceRed:10, adjSave:28, status:'other',    usLocal:90 },
+  { key:'O-Rings',                       label:'O-Rings',                totalCost:2,   tariffAmt:0,   usCost:2,   saving:0,   tariffRate:10, priceRed:10, adjSave:20, status:'other',    usLocal:90 },
+  { key:'Covers',                        label:'Covers',                 totalCost:1,   tariffAmt:0,   usCost:1,   saving:0,   tariffRate:25, priceRed:10, adjSave:22, status:'other',    usLocal:90 }
+];
+
+// Track which commodities are currently selected ('all' or array of keys)
+var activeComms = 'all';
+
+function getFilteredComms() {
+  if (activeComms === 'all') return ALL_COMMODITIES;
+  return ALL_COMMODITIES.filter(function(c) { return activeComms.indexOf(c.key) > -1; });
+}
+
+function applyCommFilter() {
+  var sel = document.getElementById('commFilter');
+  var selected = Array.from(sel.selectedOptions).map(function(o) { return o.value; });
+  // If user picked any real commodity, deselect 'All Commodities'
+  var realComms = selected.filter(function(v){ return v !== 'all'; });
+  if (realComms.length > 0) {
+    // Deselect the 'all' option programmatically
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === 'all') sel.options[i].selected = false;
+    }
+    activeComms = realComms;
+  } else {
+    // Only 'all' selected or nothing selected — treat as all
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === 'all') sel.options[i].selected = true;
+    }
+    activeComms = 'all';
+  }
+  refreshAllCharts();
+}
+
+function resetCommFilter() {
+  var sel = document.getElementById('commFilter');
+  for (var i = 0; i < sel.options.length; i++) {
+    sel.options[i].selected = (sel.options[i].value === 'all');
+  }
+  activeComms = 'all';
+  refreshAllCharts();
+}
+
+function refreshAllCharts() {
+  renderSpendChart();
+  renderSavingsChart();
+  renderCAChart();
+  renderPVOChart();
+}
+
+// ── HELPERS ──
+function mkEl(tag, css, text) {
+  var el = document.createElement(tag);
+  if (css) el.style.cssText = css;
+  if (text !== undefined) el.textContent = text;
+  return el;
+}
+function statusColor(status) {
+  if (status === 'in-scope')  return '#009999';
+  if (status === 'pipeline')  return '#b45309';
+  if (status === 'excluded')  return '#e74c3c';
+  return '#ced4da';
+}
+
+// ── SPEND CHART — top 10 by spend, always shown ──
+function renderSpendChart() {
+  // Always show top 10 from full list; highlight selected ones
+  var withCost = ALL_COMMODITIES.filter(function(c) { return c.totalCost > 0; });
+  withCost.sort(function(a,b) { return b.totalCost - a.totalCost; });
+  var top11 = withCost.slice(0, 11);
+
+  var chartEl = document.getElementById('spendChart');
+  var lblsEl  = document.getElementById('spendLabels');
+  if (!chartEl || !lblsEl) return;
+  chartEl.innerHTML = ''; lblsEl.innerHTML = '';
+
+  var maxV = Math.max.apply(null, top11.map(function(c) { return c.totalCost; }));
+  var availH = Math.max(chartEl.clientHeight - 22, 100);
+
+  // Determine which keys are active for highlight
+  var selKeys = activeComms === 'all' ? null : activeComms;
+
+  top11.forEach(function(c) {
+    var isHighlighted = !selKeys || selKeys.indexOf(c.key) > -1;
+    var baseColor = statusColor(c.status);
+    var col = mkEl('div', 'display:flex;flex-direction:column;align-items:center;flex:1;gap:3px;min-width:28px;' + (!isHighlighted ? 'opacity:0.3;' : ''));
+    col.appendChild(mkEl('div', 'font-size:9px;color:#495057;font-family:var(--mono);font-weight:600;', '$' + c.totalCost + 'k'));
+    var bar = mkEl('div', 'background:' + baseColor + ';width:100%;border-radius:3px 3px 0 0;height:' + Math.round((c.totalCost/maxV)*availH) + 'px;' + (c.status==='pipeline'?'opacity:0.75;':''));
+    col.appendChild(bar);
+    chartEl.appendChild(col);
+    var lblStyle = 'flex:1;text-align:center;font-size:9px;min-width:28px;' + (isHighlighted ? 'color:#343a40;font-weight:600;' : 'color:#aaa;');
+    lblsEl.appendChild(mkEl('span', lblStyle, c.label.split(' ')[0]));
+  });
+}
+
+// ── SAVINGS CHART — single summarized bar pair, real FY25 dollars ──
+function renderSavingsChart() {
+  var chart   = document.getElementById('svChart');
+  var statsEl = document.getElementById('svStats');
+  if (!chart) return;
+  chart.innerHTML = '';
+
+  // Grand totals across all commodities
+  var allC = ALL_COMMODITIES;
+  var grandSpend  = allC.reduce(function(s,c){ return s + c.totalCost; }, 0);
+  var grandTariff = allC.reduce(function(s,c){ return s + c.tariffAmt; }, 0);
+  var grandUS     = allC.reduce(function(s,c){ return s + c.usCost; }, 0);
+  var grandLanded = grandSpend + grandTariff;
+  var grandSave   = grandLanded - grandUS;
+
+  // Selected totals
+  var selComms  = getFilteredComms();
+  var isAll     = activeComms === 'all';
+  var selSpend  = selComms.reduce(function(s,c){ return s + c.totalCost; }, 0);
+  var selTariff = selComms.reduce(function(s,c){ return s + c.tariffAmt; }, 0);
+  var selUS     = selComms.reduce(function(s,c){ return s + c.usCost; }, 0);
+  var selLanded = selSpend + selTariff;
+  var selSave   = selLanded - selUS;
+  var selAvgAdj = selLanded > 0
+    ? Math.round(selSave / selLanded * 100)
+    : 0;
+
+  var nbgTotal = isAll ? grandLanded : selLanded;
+  var nbgBase  = isAll ? grandSpend  : selSpend;
+  var tariff   = isAll ? grandTariff : selTariff;
+  var usTotal  = isAll ? grandUS     : selUS;
+  var saving   = isAll ? grandSave   : selSave;
+  var label    = isAll ? 'All Commodities (' + allC.length + ' groups)' :
+                 selComms.length === 1 ? selComms[0].label :
+                 selComms.length + ' groups selected';
+
+  var availH = Math.max(chart.clientHeight - 48, 120);
+  var maxV   = nbgTotal * 1.10;
+  var scH    = function(v) { return Math.round((v / maxV) * availH); };
+
+  var wrap = mkEl('div', 'display:flex;align-items:flex-end;gap:0;width:100%;justify-content:center;');
+
+  // Left label
+  var leftLbl = mkEl('div', 'display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-end;padding-right:14px;padding-bottom:2px;gap:3px;flex-shrink:0;');
+  leftLbl.appendChild(mkEl('div', 'font-size:11px;color:#495057;font-family:var(--mono);font-weight:700;', '$' + nbgTotal.toLocaleString() + 'k'));
+  leftLbl.appendChild(mkEl('div', 'font-size:12px;font-weight:700;color:#343a40;', 'NBG Landed'));
+  leftLbl.appendChild(mkEl('div', 'font-size:10px;color:#8b95a1;', 'supplier + §232'));
+
+  // NBG stacked bar
+  var nbgCol = mkEl('div', 'display:flex;flex-direction:column;align-items:center;width:110px;flex-shrink:0;');
+  var nbgStack = mkEl('div', 'width:100%;display:flex;flex-direction:column;border-radius:6px 6px 0 0;overflow:hidden;');
+  var tariffSeg = mkEl('div', 'background:#e74c3c;opacity:0.85;height:' + scH(tariff) + 'px;display:flex;align-items:center;justify-content:center;', '');
+  if (scH(tariff) > 18) tariffSeg.appendChild(mkEl('span', 'font-size:10px;color:white;font-weight:700;', 'Duty'));
+  var baseSeg = mkEl('div', 'background:#8b95a1;height:' + scH(nbgBase) + 'px;display:flex;align-items:center;justify-content:center;', '');
+  if (scH(nbgBase) > 18) baseSeg.appendChild(mkEl('span', 'font-size:10px;color:white;font-weight:700;', 'Supplier'));
+  nbgStack.appendChild(tariffSeg); nbgStack.appendChild(baseSeg);
+  nbgCol.appendChild(nbgStack);
+
+  // Middle annotation
+  var mid = mkEl('div', 'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 18px;padding-bottom:' + scH(usTotal) + 'px;flex-shrink:0;gap:3px;');
+  mid.appendChild(mkEl('div', 'font-size:22px;color:#166534;font-weight:800;', '\u2195'));
+  mid.appendChild(mkEl('div', 'font-size:14px;font-weight:800;color:#166534;font-family:var(--mono);white-space:nowrap;', '$' + saving.toLocaleString() + 'k'));
+  mid.appendChild(mkEl('div', 'font-size:11px;color:#166534;white-space:nowrap;text-align:center;', selAvgAdj + '% landed\ncost avoided'));
+
+  // US bar
+  var usCol = mkEl('div', 'display:flex;flex-direction:column;align-items:center;width:110px;flex-shrink:0;');
+  var usBar = mkEl('div', 'background:#009999;width:100%;height:' + scH(usTotal) + 'px;border-radius:6px 6px 0 0;display:flex;align-items:center;justify-content:center;', '');
+  if (scH(usTotal) > 18) usBar.appendChild(mkEl('span', 'font-size:10px;color:white;font-weight:700;', 'US Cost'));
+  usCol.appendChild(usBar);
+
+  // Right label
+  var rightLbl = mkEl('div', 'display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;padding-left:14px;padding-bottom:2px;gap:3px;flex-shrink:0;');
+  rightLbl.appendChild(mkEl('div', 'font-size:11px;color:#495057;font-family:var(--mono);font-weight:700;', '$' + usTotal.toLocaleString() + 'k'));
+  rightLbl.appendChild(mkEl('div', 'font-size:12px;font-weight:700;color:#343a40;', 'US Sourced'));
+  rightLbl.appendChild(mkEl('div', 'font-size:10px;color:#8b95a1;', 'no import duty'));
+
+  wrap.appendChild(leftLbl); wrap.appendChild(nbgCol); wrap.appendChild(mid);
+  wrap.appendChild(usCol); wrap.appendChild(rightLbl);
+  chart.appendChild(wrap);
+
+  // Scope label
+  var scopeRow = mkEl('div', 'display:flex;justify-content:center;margin-top:6px;');
+  scopeRow.appendChild(mkEl('div', 'font-size:11px;color:#6c757d;background:#f8f9fa;border:1px solid #e5e7eb;border-radius:20px;padding:2px 12px;', label));
+  chart.appendChild(scopeRow);
+
+  // Stats row
+  if (statsEl) {
+    // Weighted avg: total saving / total landed (not simple avg of adjSave%)
+    var grandAvgAdj = grandLanded > 0 ? Math.round(grandSave / grandLanded * 100) : 0;
+    statsEl.innerHTML =
+      '<div style="padding:8px 14px;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;flex:1;">' +
+        '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#166534;margin-bottom:3px;">Total Est. Saving — All Commodities · FY2025</div>' +
+        '<div style="font-size:20px;font-weight:800;color:#166534;font-family:var(--mono);">$' + grandSave.toLocaleString() + 'k</div>' +
+        '<div style="font-size:11px;color:#6c757d;">' + grandAvgAdj + '% of NBG landed cost avoided · $' + grandLanded.toLocaleString() + 'k landed → $' + grandUS.toLocaleString() + 'k US-sourced</div>' +
+      '</div>' +
+      (!isAll ?
+        '<div style="padding:8px 14px;background:#e6f4f4;border:1px solid #009999;border-radius:6px;flex:1;">' +
+          '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#007a7a;margin-bottom:3px;">Selected: ' + label + '</div>' +
+          '<div style="font-size:20px;font-weight:800;color:#007a7a;font-family:var(--mono);">$' + selSave.toLocaleString() + 'k</div>' +
+          '<div style="font-size:11px;color:#6c757d;">' + selAvgAdj + '% of NBG landed cost avoided · ' + selComms.length + ' group(s)</div>' +
+        '</div>' : '') +
+      '';
+  }
+}
+
+// ── COST AVOIDANCE CHART ──
+var caMonthLabels = ['Feb','Mar','Apr','May','Jun','Jul','Aug'];
+var caBarTypes    = ['past','past','past','current','forecast','forecast','forecast'];
+// Base values for 'all'; scale proportionally for filtered set
+var caBaseAll = [18,28,42,52,68,85,104];
+
+function renderCAChart() {
+  var comms = getFilteredComms();
+  var chart   = document.getElementById('caChart');
+  var labelsEl = document.getElementById('caLabels');
+  var statsEl  = document.getElementById('caStats');
+  if (!chart) return;
+
+  // Scale factor based on selected vs. all total cost
+  var totalAll = ALL_COMMODITIES.reduce(function(s,c){return s+c.totalCost;},0);
+  var totalSel = comms.reduce(function(s,c){return s+c.totalCost;},0);
+  var scale = totalAll > 0 ? totalSel / totalAll : 1;
+  var vals = caBaseAll.map(function(v) { return Math.round(v * scale); });
+
+  var maxV = Math.max.apply(null, vals);
+  var availH = Math.max(chart.clientHeight - 20, 100);
+  chart.innerHTML = ''; labelsEl.innerHTML = '';
+
+  vals.forEach(function(v, i) {
+    var type = caBarTypes[i];
+    var isCur = type === 'current'; var isFc = type === 'forecast';
+    var bg = isCur ? '#007a7a' : isFc ? '#e6f4f4' : '#009999';
+    var col = mkEl('div', 'display:flex;flex-direction:column;align-items:center;flex:1;gap:2px;');
+    col.appendChild(mkEl('div', 'font-size:9px;color:#495057;font-family:var(--mono);font-weight:600;', '$' + v + 'k'));
+    var bar = mkEl('div', 'width:100%;border-radius:3px 3px 0 0;height:' + Math.round((v/Math.max(maxV,1))*availH) + 'px;background:' + bg + ';', '');
+    if (isFc) { bar.style.border = '1.5px dashed #009999'; bar.style.borderBottom = 'none'; bar.style.background = '#e6f4f4'; }
+    col.appendChild(bar); chart.appendChild(col);
+    var lbl = mkEl('span', 'flex:1;text-align:center;font-size:9px;' + (isCur ? 'font-weight:700;color:#007a7a;' : isFc ? 'color:#8b95a1;font-style:italic;' : ''), isCur ? 'May \u25b6' : caMonthLabels[i]);
+    labelsEl.appendChild(lbl);
+  });
+
+  if (statsEl) {
+    statsEl.innerHTML = '';
+    var cur = vals[3], prior = vals[2], fcast = vals[4]+vals[5]+vals[6];
+    statsEl.innerHTML =
+      '<div><div style="font-size:14px;font-weight:800;color:#009999;font-family:var(--mono);">$' + cur + 'k</div><div style="font-size:11px;color:#6c757d;">Current month (May)</div></div>' +
+      '<div><div style="font-size:14px;font-weight:800;color:#166534;font-family:var(--mono);">+' + (prior > 0 ? Math.round((cur-prior)/prior*100) : 0) + '%</div><div style="font-size:11px;color:#6c757d;">vs. prior month</div></div>' +
+      '<div><div style="font-size:14px;font-weight:800;color:#6c757d;font-family:var(--mono);">$' + fcast + 'k</div><div style="font-size:11px;color:#6c757d;">3-month forecast (est.)</div></div>';
+  }
+}
+
+// ── PVO CHART ──
+var pvoMonths = ['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'];
+// FY2025 NBG monthly spend split: SDE spare parts vs other NBG spend (USD thousands)
+// Source: Euro Steam Purchase History Report joined to SDE USA Spares List on material number
+var pvoSDE   = [210, 157,  65,  25, 259,  96,  23,  43, 612, 135,  17, 273];
+var pvoOther = [2101,  75, 133, 483, 357, 215,  41, 5168, 243, 476, 115, 459];
+var pvoTotalSDE   = 1915;  // matches OTD report exactly
+var pvoTotalOther = 9869;
+var pvoTotalAll   = 11784; // matches OTD report $11,784,483
+
+function renderPVOChart() {
+  var chart    = document.getElementById('pvoChart');
+  var labelsEl = document.getElementById('pvoLabels');
+  var statsEl  = document.getElementById('pvoStats');
+  if (!chart) return;
+
+  var combined = pvoSDE.map(function(s, i) { return s + pvoOther[i]; });
+  var maxV = Math.max.apply(null, combined);
+  var availH = 148;
+  chart.innerHTML = ''; labelsEl.innerHTML = '';
+
+  pvoSDE.forEach(function(sde, i) {
+    var other = pvoOther[i];
+    var total = sde + other;
+    var hSDE   = Math.round((sde   / maxV) * availH);
+    var hOther = Math.round((other / maxV) * availH);
+
+    var col = mkEl('div', 'display:flex;flex-direction:column;align-items:center;flex:1;gap:0;');
+    var totalLbl = mkEl('div', 'font-size:8px;color:#6c757d;font-family:var(--mono);margin-bottom:2px;', '$' + total + 'k');
+    var stack = mkEl('div', 'width:100%;display:flex;flex-direction:column;border-radius:3px 3px 0 0;overflow:hidden;');
+    // Other on top (gray), SDE on bottom (teal)
+    var barOther = mkEl('div', 'background:#ced4da;width:100%;height:' + hOther + 'px;', '');
+    var barSDE   = mkEl('div', 'background:#009999;width:100%;height:' + hSDE + 'px;', '');
+    stack.appendChild(barOther);
+    stack.appendChild(barSDE);
+    col.appendChild(totalLbl);
+    col.appendChild(stack);
+    chart.appendChild(col);
+    labelsEl.appendChild(mkEl('span', 'flex:1;text-align:center;font-size:9px;', pvoMonths[i]));
+  });
+
+  if (statsEl) {
+    statsEl.innerHTML = '';
+    function mkStat(val, lbl, color) {
+      var d = mkEl('div','');
+      d.appendChild(mkEl('div','font-size:15px;font-weight:800;color:'+color+';font-family:var(--mono);','$'+val.toLocaleString()+'k'));
+      d.appendChild(mkEl('div','font-size:11px;color:#6c757d;',lbl));
+      return d;
+    }
+    statsEl.appendChild(mkStat(pvoTotalSDE,   'FY25 SDE Spare Parts',  '#009999'));
+    statsEl.appendChild(mkStat(pvoTotalOther, 'FY25 Other NBG Spend',  '#8b95a1'));
+    statsEl.appendChild(mkStat(pvoTotalAll,   'FY25 Total NBG Spend',  '#343a40'));
+  }
+}
+
+// ── DMAIC TOOLTIP ──
+function initDMAIC() {
+  document.querySelectorAll('.dmaic-phase').forEach(function(el) {
+    el.addEventListener('mouseenter', function() {
+      var tip = document.getElementById('dmaic-tooltip');
+      var label = el.querySelector('.dmaic-phase-label').textContent;
+      var date  = el.querySelector('.dmaic-date').textContent;
+      if (tip) {
+        tip.style.display = 'block'; tip.textContent = '';
+        var strong = mkEl('strong', 'color:white;', label + ' \u00b7 ' + date);
+        tip.appendChild(strong); tip.appendChild(document.createElement('br'));
+        tip.appendChild(document.createTextNode(el.getAttribute('data-tip')));
+      }
+    });
+    el.addEventListener('mouseleave', function() {
+      var tip = document.getElementById('dmaic-tooltip');
+      if (tip) tip.style.display = 'none';
+    });
+  });
+}
+
+// ── INIT ──
+window.addEventListener('load', function() {
+  initDMAIC();
+
+  // Init Supabase if configured
+  var sbReady = initSupabase();
+
+  // If NOT configured (local/preview), show editor controls immediately
+  if (!sbReady) {
+    _isEditor = true;
+    document.querySelectorAll('.editor-only').forEach(function(el){ el.style.display = ''; });
+    var lockBtn = document.getElementById('lockBtn');
+    if (lockBtn) { lockBtn.textContent = '\u2699 Local Mode'; lockBtn.style.background = 'rgba(150,150,150,0.25)'; }
+  }
+
+  // Render from localStorage immediately
+  renderScope();
+  renderBulletin();
+  renderProcess();
+  renderActions();
+  refreshAllCharts();
+  initActionsDrag();
+  setTimeout(updateActionCallout, 50);
+  initNotesIndicators();
+
+  // Fetch fresh from Supabase in background
+  if (sbReady) {
+    loadAllFromSupabase();
+    _sb.auth.getSession().then(function(res) {
+      if (res.data && res.data.session) {
+        _isEditor = true;
+        enableEditMode();
+      }
+    });
+  }
+
+  // Keyboard shortcuts for login modal
+  var pwInput = document.getElementById('loginPassword');
+  var emInput = document.getElementById('loginEmail');
+  if (pwInput) pwInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') submitLogin(); });
+  if (emInput) emInput.addEventListener('keydown', function(e){ if (e.key === 'Enter') { var pw = document.getElementById('loginPassword'); if (pw) pw.focus(); } });
+});
+
+function promptAddResource(category) {
+  alert('In the live version, this will open a form to add a document link. Category: ' + category);
+}
+</script>
+<!-- Action Edit Modal -->
+<div id="actionEditModalBackdrop" onclick="closeActionEdit()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;"></div>
+<div id="actionEditModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:12px;padding:24px;width:540px;max-width:95vw;z-index:201;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+  <div style="font-size:16px;font-weight:700;color:var(--gray-700);margin-bottom:18px;">Edit Action Item</div>
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">Action Item *</label>
+    <textarea id="editActionText" class="modal-input" rows="3" style="resize:vertical;" placeholder="Describe the action..."></textarea>
+  </div>
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">Status Flag <span style="font-weight:400;text-transform:none;">(optional — appears below action text)</span></label>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <select id="editFlagType" class="modal-input" style="width:130px;flex-shrink:0;">
+        <option value="">None</option>
+        <option value="warning">⚠ Warning</option>
+        <option value="hold">⏸ On Hold</option>
+        <option value="info">ℹ Info</option>
+        <option value="urgent">🔴 Urgent</option>
+      </select>
+      <input id="editFlagText" class="modal-input" placeholder="Flag label text..." style="flex:1;">
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px;">
+    <div>
+      <label style="font-size:12px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">Owner</label>
+      <input id="editOwner" class="modal-input" placeholder="Name">
+    </div>
+    <div>
+      <label style="font-size:12px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">Due Date</label>
+      <input id="editDue" type="date" class="modal-input">
+    </div>
+    <div>
+      <label style="font-size:12px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;">Status</label>
+      <select id="editStatus" class="modal-input">
+        <option value="Open">Open</option>
+        <option value="In Progress">In Progress</option>
+        <option value="On Hold">On Hold</option>
+        <option value="Done">Done</option>
+      </select>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;">
+    <button class="btn btn-outline btn-sm" onclick="closeActionEdit()">Cancel</button>
+    <button class="btn btn-primary btn-sm" onclick="saveActionEdit()">Save Changes</button>
+  </div>
+</div>
+
+
+<!-- ── LOGIN MODAL ── -->
+<div id="loginBackdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:500;"></div>
+<div id="loginModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:14px;padding:32px 36px;width:380px;max-width:95vw;z-index:501;box-shadow:0 24px 64px rgba(0,0,0,0.22);">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+    <div style="font-size:24px;">🔒</div>
+    <div>
+      <div style="font-size:17px;font-weight:700;color:var(--gray-800);">Editor Login</div>
+      <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">Sign in to enable editing</div>
+    </div>
+  </div>
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px;">Email</label>
+    <input id="loginEmail" type="email" class="modal-input" placeholder="your@email.com" autocomplete="email">
+  </div>
+  <div style="margin-bottom:20px;">
+    <label style="font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px;">Password</label>
+    <input id="loginPassword" type="password" class="modal-input" placeholder="••••••••" autocomplete="current-password">
+  </div>
+  <div id="loginError" style="display:none;background:#fdecea;border:1px solid #fca5a5;border-radius:6px;padding:8px 12px;font-size:13px;color:#c0392b;margin-bottom:14px;"></div>
+  <div style="display:flex;gap:8px;">
+    <button id="loginSubmitBtn" class="btn btn-primary" style="flex:1;justify-content:center;" onclick="submitLogin()">Sign In</button>
+    <button class="btn btn-outline btn-sm" onclick="closeLoginModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- ── CONFIG MODAL (first-time setup) ── -->
+<div id="configBackdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:600;"></div>
+<div id="configModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:14px;padding:32px 36px;width:480px;max-width:95vw;z-index:601;box-shadow:0 24px 64px rgba(0,0,0,0.22);">
+  <div style="font-size:17px;font-weight:700;color:var(--gray-800);margin-bottom:6px;">Connect to Supabase</div>
+  <div style="font-size:13px;color:var(--gray-500);margin-bottom:20px;">One-time setup — paste your project credentials below. These are saved in your browser only.</div>
+  <div style="margin-bottom:14px;">
+    <label style="font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px;">Supabase Project URL</label>
+    <input id="cfgUrl" class="modal-input" placeholder="https://xxxxxxxxxxxx.supabase.co">
+  </div>
+  <div style="margin-bottom:20px;">
+    <label style="font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px;">Anon Public Key</label>
+    <input id="cfgKey" class="modal-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+  </div>
+  <div id="cfgError" style="display:none;background:#fdecea;border:1px solid #fca5a5;border-radius:6px;padding:8px 12px;font-size:13px;color:#c0392b;margin-bottom:14px;"></div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn btn-primary" style="flex:1;justify-content:center;" onclick="saveConfig()">Save & Connect</button>
+  </div>
+  <div style="font-size:11px;color:var(--gray-400);margin-top:12px;">Your credentials are stored in localStorage on this device only and are never sent anywhere except to Supabase.</div>
+</div>
+
+</body>
+</html>
