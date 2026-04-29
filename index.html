@@ -770,6 +770,7 @@ tr.has-notes .notes-icon { display: inline; }
 .drag-handle:hover { color: var(--teal); }
 .drag-handle:active { cursor: grabbing; }
 tr.drag-over td { border-top: 2px solid var(--teal) !important; }
+.proc-step.drag-over { border-top: 2px solid var(--teal) !important; }
 tr.dragging { opacity: 0.45; }
 .scope-table td:first-child { width: 22px; padding: 0 4px; text-align: center; }
 /* ── ACTION EDIT MODAL ── */
@@ -860,7 +861,7 @@ tr.dragging { opacity: 0.45; }
   </div>
 
   <!-- Main layout: left column (commodity) | right column (bulletin) -->
-  <div style="display:grid;grid-template-columns:1fr 320px;gap:14px;margin-bottom:14px;align-items:start;">
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:14px;margin-bottom:14px;align-items:stretch;">
 
     <!-- Left column -->
     <div style="display:flex;flex-direction:column;gap:14px;">
@@ -885,13 +886,13 @@ tr.dragging { opacity: 0.45; }
 
     </div><!-- /left column -->
 
-    <!-- Right column: Bulletin Board full height -->
-    <div class="card" style="display:flex;flex-direction:column;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <!-- Right column: Bulletin Board matches scope card height -->
+    <div class="card" style="display:flex;flex-direction:column;min-height:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0;">
         <div class="card-title" style="margin-bottom:0;"><div class="card-dot" style="background:var(--indigo);"></div>Recent Updates</div>
         <button class="btn btn-primary btn-sm editor-only" style="display:none;" onclick="openUpdateModal()">+ Add</button>
       </div>
-      <div id="bulletinList" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;"></div>
+      <div id="bulletinList" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;min-height:0;"></div>
     </div>
 
   </div><!-- /outer 2-col grid -->
@@ -1903,19 +1904,85 @@ function renderProcess() {
     var ic = PROC_ICONS[row.status] || PROC_ICONS['open'];
     var div = document.createElement('div');
     div.className = 'proc-step';
-    div.style.cssText = 'position:relative;padding-right:56px;';
+    div.setAttribute('data-process-id', row.id);
+    div.setAttribute('draggable', 'true');
+    div.style.cssText = 'position:relative;padding-right:56px;padding-left:28px;cursor:default;';
     div.innerHTML =
+      '<span class="drag-handle" title="Drag to reorder" style="position:absolute;left:4px;top:50%;transform:translateY(-50%);font-size:13px;">&#x2630;</span>' +
       '<div class="proc-icon ' + ic.cls + '">' + ic.sym + '</div>' +
       '<div class="proc-body" style="flex:1;">' +
         '<strong>' + esc(row.title) + '</strong>' +
         '<small>' + esc(row.detail) + '</small>' +
       '</div>' +
       '<div style="position:absolute;right:0;top:50%;transform:translateY(-50%);display:flex;gap:5px;">' +
-        '<button class="icon-btn" title="Edit" onclick="openProcessModal(' + row.id + ')">✎</button>' +
-        '<button class="icon-btn icon-btn-del" title="Delete" onclick="deleteProcessItem(' + row.id + ')">✕</button>' +
+        '<button class="icon-btn editor-only" style="display:' + (_isEditor ? '' : 'none') + ';" title="Edit" onclick="openProcessModal(' + row.id + ')">✎</button>' +
+        '<button class="icon-btn icon-btn-del editor-only" style="display:' + (_isEditor ? '' : 'none') + ';" title="Delete" onclick="deleteProcessItem(' + row.id + ')">✕</button>' +
       '</div>';
+
+    // Drag events on each div
+    div.addEventListener('dragstart', function(e) {
+      _dragSrc = div;
+      div.style.opacity = '0.45';
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', '');
+    });
+    div.addEventListener('dragend', function() {
+      div.style.opacity = '';
+      el.querySelectorAll('.proc-step').forEach(function(d){ d.classList.remove('drag-over'); });
+    });
+
     el.appendChild(div);
   });
+
+  // Delegation on the container
+  el.removeEventListener('dragover',  el._procDragOver  || null);
+  el.removeEventListener('dragleave', el._procDragLeave || null);
+  el.removeEventListener('drop',      el._procDrop      || null);
+
+  el._procDragOver = function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    var target = e.target.closest('.proc-step');
+    if (target && target !== _dragSrc) {
+      el.querySelectorAll('.proc-step').forEach(function(d){ d.classList.remove('drag-over'); });
+      target.classList.add('drag-over');
+    }
+  };
+  el._procDragLeave = function(e) {
+    if (!el.contains(e.relatedTarget)) {
+      el.querySelectorAll('.proc-step').forEach(function(d){ d.classList.remove('drag-over'); });
+    }
+  };
+  el._procDrop = function(e) {
+    e.preventDefault();
+    var target = e.target.closest('.proc-step');
+    el.querySelectorAll('.proc-step').forEach(function(d){ d.classList.remove('drag-over'); });
+    if (!target || !_dragSrc || target === _dragSrc) return;
+    var rect = target.getBoundingClientRect();
+    if (e.clientY < rect.top + rect.height / 2) {
+      el.insertBefore(_dragSrc, target);
+    } else {
+      target.after(_dragSrc);
+    }
+    saveProcessOrder();
+  };
+
+  el.addEventListener('dragover',  el._procDragOver);
+  el.addEventListener('dragleave', el._procDragLeave);
+  el.addEventListener('drop',      el._procDrop);
+}
+
+function saveProcessOrder() {
+  var el = document.getElementById('processListRef');
+  if (!el) return;
+  var divs = el.querySelectorAll('.proc-step[data-process-id]');
+  if (!divs.length) return;
+  var data = loadData(KEYS.process, DEFAULT_PROCESS);
+  var idOrder = Array.from(divs).map(function(d){ return parseInt(d.getAttribute('data-process-id')); });
+  var reordered = idOrder.map(function(id){
+    return data.filter(function(r){ return r.id === id; })[0];
+  }).filter(Boolean);
+  if (reordered.length) saveData(KEYS.process, reordered);
 }
 
 function esc(s) {
