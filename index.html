@@ -789,7 +789,6 @@ tr.dragging { opacity: 0.45; }
 <body>
 <div class="shell">
 <div id="savedFlash">✓ Saved</div>
-<button id="lockBtn" onclick="handleLockClick()" style="position:fixed;top:12px;right:16px;z-index:100;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:white;font-size:13px;font-weight:600;padding:5px 12px;cursor:pointer;font-family:var(--font);transition:background 0.15s;" title="Editor login">🔒 Edit</button>
 
 <!-- TOP BAR -->
 <div class="topbar">
@@ -809,6 +808,7 @@ tr.dragging { opacity: 0.45; }
       <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray-500);margin-bottom:1px;">Last Updated</div>
       <div class="date-pill" id="lastUpdatedDate">Apr 23, 2026</div>
     </div>
+    <button id="lockBtn" onclick="handleLockClick()" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:white;font-size:13px;font-weight:600;padding:5px 12px;cursor:pointer;font-family:var(--font);transition:background 0.15s;white-space:nowrap;" title="Editor login">🔒 Edit</button>
   </div>
 </div>
 
