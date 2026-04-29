@@ -1757,9 +1757,6 @@ function loadData(key, defaults) {
     return data;
   } catch(e) { return JSON.parse(JSON.stringify(defaults)); }
 }
-function saveData(key, data) {
-  try { localStorage.setItem(key, JSON.stringify(data)); } catch(e) {}
-}
 function nextId(arr) {
   return arr.length === 0 ? 1 : Math.max.apply(null, arr.map(function(x){return x.id;})) + 1;
 }
