@@ -1144,28 +1144,22 @@ tr.dragging { opacity: 0.45; }
   </div>
 
   <div class="completed-section">
-    <div class="completed-toggle" onclick="toggleCompleted()">▶ Completed Items (2)</div>
+    <div class="completed-toggle" onclick="toggleCompleted()">▶ Completed Items (0)</div>
     <div id="completedList" style="display:none;">
       <div class="card" style="padding:0;overflow:hidden;">
-        <table class="action-table">
-          <tbody>
-            <tr class="done">
-              <td style="text-align:center;color:#22c55e;font-size:16px;">✓</td>
-              <td class="action-text-cell" style="text-decoration:line-through;color:var(--gray-400);">Share Daniel's SDE spare parts list with the team</td>
-              <td><span class="badge badge-gray">Jake Kelley</span></td>
-              <td style="font-family:var(--mono);font-size:12px;color:var(--gray-400);">Apr 23, 2026</td>
-              <td><span class="badge badge-green">Done</span></td>
-              <td></td>
+        <table class="action-table" id="completedTable">
+          <thead>
+            <tr>
+              <th style="width:26px;"></th>
+              <th style="width:36px;"></th>
+              <th>Action Item</th>
+              <th style="width:150px;">Owner</th>
+              <th style="width:110px;">Due Date</th>
+              <th style="width:120px;">Status</th>
+              <th style="width:60px;"></th>
             </tr>
-            <tr class="done">
-              <td style="text-align:center;color:#22c55e;font-size:16px;">✓</td>
-              <td class="action-text-cell" style="text-decoration:line-through;color:var(--gray-400);">Send NBG purchase history report to the team</td>
-              <td><span class="badge badge-gray">Jake Kelley</span></td>
-              <td style="font-family:var(--mono);font-size:12px;color:var(--gray-400);">Apr 23, 2026</td>
-              <td><span class="badge badge-green">Done</span></td>
-              <td></td>
-            </tr>
-          </tbody>
+          </thead>
+          <tbody></tbody>
         </table>
       </div>
     </div>
@@ -1540,7 +1534,10 @@ function enableEditMode() {
   var btn = document.getElementById('lockBtn');
   if (btn) { btn.textContent = '🔓 Editor'; btn.style.background = 'rgba(0,200,150,0.25)'; }
   document.querySelectorAll('.editor-only').forEach(function(el){ el.style.display = ''; });
-  // Re-render actions so add-label buttons appear
+  // Re-render all sections so edit/delete buttons appear
+  renderScope();
+  renderBulletin();
+  renderProcess();
   renderActions();
   showToast('Edit mode enabled');
 }
@@ -1601,13 +1598,13 @@ function showToast(msg) {
 async function loadDataRemote(table, defaults) {
   if (!isConfigured()) return loadDataLocal(table, defaults);
   try {
-    var res = await _sb.from(table).select('*').order('sort_order', { ascending: true });
+    var res = await _sb.from(table).select('*').order('sort_order', { ascending: true, nullsFirst: false });
     if (res.error) throw res.error;
     if (!res.data || res.data.length === 0) return loadDataLocal(table, defaults);
     if (table === KEYS.scope) return migrateScope(res.data);
     return res.data;
   } catch(e) {
-    console.warn('Supabase read failed, using localStorage:', e);
+    console.warn('Supabase read failed for', table, ':', JSON.stringify(e));
     return loadDataLocal(table, defaults);
   }
 }
@@ -1837,8 +1834,8 @@ function renderScope() {
       '<td>' + badge(row.cstatus) + '</td>' +
       '<td style="color:var(--gray-500);font-size:13px;">' + esc(row.notes) + '</td>' +
       '<td style="text-align:right;padding-right:10px;white-space:nowrap;">' +
-        '<button class="icon-btn" title="Edit" onclick="openScopeModal(' + row.id + ')">✎</button>' +
-        ' <button class="icon-btn icon-btn-del" title="Delete" onclick="deleteScopeItem(' + row.id + ')">✕</button>' +
+        (_isEditor ? '<button class="icon-btn" title="Edit" onclick="openScopeModal(' + row.id + ')">\u270e</button>' +
+        ' <button class="icon-btn icon-btn-del" title="Delete" onclick="deleteScopeItem(' + row.id + ')">\u2715</button>' : '') +
       '</td>';
 
     tbody.appendChild(tr);
@@ -1881,8 +1878,8 @@ function renderBulletin() {
         '<span class="bulletin-tag" style="background:' + cs.bg + ';color:' + cs.color + ';">' + esc(row.cat) + '</span>' +
         '<span class="bulletin-date">' + fmtDate(row.date) + '</span>' +
         '<div style="display:flex;gap:5px;margin-left:auto;">' +
-          '<button class="icon-btn" title="Edit" onclick="openUpdateModal(' + row.id + ')">✎</button>' +
-          '<button class="icon-btn icon-btn-del" title="Delete" onclick="deleteUpdateItem(' + row.id + ')">✕</button>' +
+          (_isEditor ? '<button class="icon-btn" title="Edit" onclick="openUpdateModal(' + row.id + ')">\u270e</button>' +
+          '<button class="icon-btn icon-btn-del" title="Delete" onclick="deleteUpdateItem(' + row.id + ')">\u2715</button>' : '') +
         '</div>' +
       '</div>' +
       '<div class="bulletin-body">' + esc(row.body) + '</div>';
@@ -2200,7 +2197,7 @@ function updateActionCallout() {
     if (st !== 'Done' && st !== 'Complete') {
       open++;
       var due = row.getAttribute('data-due') || '';
-      if (due && new Date(due) < new Date()) overdue++;
+      if (due && due < new Date().toISOString().slice(0,10)) overdue++;
     }
   });
   var textEl = document.getElementById('actionCalloutText');
@@ -2318,6 +2315,7 @@ function renderActions() {
   initActionsDrag();
   initNotesIndicators();
   setTimeout(updateActionCallout, 0);
+  setTimeout(updateCompletedCount, 0);
 }
 
 function buildActionRow(item, isDone) {
@@ -2757,54 +2755,57 @@ function commitInlineEdits(row) {
   var badgeCls = statVal === 'Open' ? 'badge-red' : statVal === 'In Progress' ? 'badge-yellow' : statVal === 'Done' ? 'badge-green' : 'badge-gray';
   if (statCell) { statCell.innerHTML = '<span class="badge ' + badgeCls + '">' + statVal + '</span>'; row.setAttribute('data-status', statVal); }
   if (actCell) actCell.innerHTML = '';
+  // Persist to Supabase + localStorage (before moving row)
+  var updatedItem = readRowToItem(row);
+  if (statVal === 'Done') updatedItem.completed = true;
+  if (updatedItem.id) persistAction(updatedItem);
   // Auto-move to completed if Done
   if (statVal === 'Done') moveRowToCompleted(row);
-  // Persist to Supabase + localStorage
-  var updatedItem = readRowToItem(row);
-  if (updatedItem.id) persistAction(updatedItem);
   updateActionCallout();
 }
 
 function handleStatusChange(sel, row) {
   row.setAttribute('data-status', sel.value);
-  // Persist status change immediately so Done rows save before commitInlineEdits
+  // Persist immediately when Done selected so completed=true is set before commit
   if (sel.value === 'Done') {
     var item = readRowToItem(row);
     item.status = 'Done';
+    item.completed = true;
     if (item.id) persistAction(item);
   }
 }
 
 function moveRowToCompleted(row) {
-  var tbody = document.querySelector('#completedList tbody');
-  if (!tbody) {
-    // Create tbody if completedList table doesn't have one
-    var tbl = document.querySelector('#completedList table');
-    if (!tbl) return;
-    tbody = tbl.querySelector('tbody');
-    if (!tbody) { tbody = document.createElement('tbody'); tbl.appendChild(tbody); }
-  }
-  var textCell = row.querySelector('.action-text-cell');
-  var text = textCell ? textCell.textContent.trim() : '';
-  var owner = row.getAttribute('data-owner') || '—';
-  var due = row.getAttribute('data-due') || '';
-  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var fmtDue = due ? (function(){ var p=due.split('-'); return months[parseInt(p[1])-1]+' '+parseInt(p[2])+', '+p[0]; })() : '—';
-  var doneRow = document.createElement('tr');
-  doneRow.className = 'done';
-  doneRow.innerHTML =
-    '<td style="text-align:center;color:#22c55e;font-size:16px;">\u2713</td>' +
-    '<td class="action-text-cell" style="text-decoration:line-through;color:var(--gray-400);">' + text + '</td>' +
-    '<td><span class="badge badge-gray">' + owner + '</span></td>' +
-    '<td style="font-family:var(--mono);font-size:12px;color:var(--gray-400);">' + fmtDue + '</td>' +
-    '<td><span class="badge badge-green">Done</span></td>' +
-    '<td></td>';
-  tbody.appendChild(doneRow);
-  // Update completed count
-  var count = tbody.querySelectorAll('tr').length;
-  var toggle = document.querySelector('.completed-toggle');
-  if (toggle) toggle.textContent = (toggle.textContent.indexOf('\u25bc') >= 0 ? '\u25bc' : '\u25b6') + ' Completed Items (' + count + ')';
+  var dbId = parseInt(row.getAttribute('data-db-id'));
+  if (!dbId) { row.remove(); return; }
+
+  // Update data cache: set completed=true and status=Done
+  var data = getActions();
+  var item = data.filter(function(a){ return a.id === dbId; })[0];
+  if (!item) { row.remove(); return; }
+  item.completed = true;
+  item.status = 'Done';
+  _actionsCache = data;
+  saveActionsLocal(data);
+  saveActionRemote(item); // persists completed=true to Supabase
+
+  // Remove from active tbody
+  var notesRow = document.getElementById('notes-row-' + row.getAttribute('data-id'));
+  if (notesRow) notesRow.remove();
   row.remove();
+
+  // Build a proper done row using buildActionRow and add to completed section
+  var compBody = document.querySelector('#completedTable tbody');
+  if (!compBody) {
+    var tbl = document.getElementById('completedTable');
+    if (!tbl) { updateCompletedCount(); updateActionCallout(); return; }
+    compBody = tbl.querySelector('tbody');
+    if (!compBody) { compBody = document.createElement('tbody'); tbl.appendChild(compBody); }
+  }
+  var doneRow = buildActionRow(item, true);
+  compBody.appendChild(doneRow);
+
+  updateCompletedCount();
   updateActionCallout();
 }
 
@@ -3007,7 +3008,7 @@ function moveToDone(row) {
 }
 
 function updateCompletedCount() {
-  var count = document.querySelectorAll('#completedList tbody tr, #completedList tr.done').length;
+  var count = document.querySelectorAll('#completedTable tbody tr').length;
   var toggle = document.querySelector('.completed-toggle');
   if (toggle) toggle.textContent = (toggle.classList.contains('open') ? '▼' : '▶') + ' Completed Items (' + count + ')';
 }
@@ -3120,7 +3121,8 @@ function toggleCompleted() {
   var toggle = document.querySelector('.completed-toggle');
   var hidden = list.style.display === 'none';
   list.style.display = hidden ? 'block' : 'none';
-  toggle.textContent = (hidden ? '\u25bc' : '\u25b6') + ' Completed Items (2)';
+  var count = document.querySelectorAll('#completedTable tbody tr').length;
+  toggle.textContent = (hidden ? '\u25bc' : '\u25b6') + ' Completed Items (' + count + ')';
 }
 
 
@@ -3491,12 +3493,15 @@ window.addEventListener('load', function() {
   // Init Supabase if configured
   var sbReady = initSupabase();
 
-  // Controls are hidden by default for all users.
-  // They become visible only after a successful editor login.
-  // If Supabase is not configured (credentials not set), show a subtle indicator.
+  // Controls hidden by default — only shown after editor login.
+  // If Supabase failed to init (bad credentials or CDN unavailable), show indicator only.
   if (!sbReady) {
     var lockBtn = document.getElementById('lockBtn');
-    if (lockBtn) { lockBtn.textContent = '\u2699 Not connected'; lockBtn.title = 'Supabase not configured — paste credentials to connect'; }
+    if (lockBtn) {
+      lockBtn.textContent = '\u2699 Not connected';
+      lockBtn.title = 'Not connected to Supabase';
+    }
+    // Do NOT show editor controls when not connected — viewers should never see edit UI
   }
 
   // Render from localStorage immediately
